@@ -29,11 +29,19 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 /**
  * This file contains an example of an iterative (Non-Linear) "OpMode".
@@ -56,11 +64,22 @@ public class Demo extends OpMode
     private ElapsedTime runtime = new ElapsedTime();
 
     // drive motors
-    private DcMotor dcmotorLeft = null;
-    private DcMotor dcmotorRight = null;
+    private DcMotorEx dcmotorLeft = null;
+    private DcMotorEx dcmotorRight = null;
 
     // drive mode
     private boolean boolPOVDrive = true;
+
+    // gyro
+    // in previous years, the gyro was unstable: it would cause some inits to hang
+    // For Ultimate Goal, it is supposedly much more stable.
+    // The documentation is not clear which imu is in the Expansion Hub.
+    private BNO055IMU imu;
+    // State used for updating telemetry
+    private Orientation angles;
+    // boolGravity == true -> take and report gravity measurements
+    private boolean boolGravity = true;
+    private Acceleration gravity;
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -72,13 +91,35 @@ public class Demo extends OpMode
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        dcmotorLeft = hardwareMap.get(DcMotor.class, "leftMotor");
-        dcmotorRight = hardwareMap.get(DcMotor.class, "rightMotor");
+        dcmotorLeft = hardwareMap.get(DcMotorEx.class, "leftMotor");
+        dcmotorRight = hardwareMap.get(DcMotorEx.class, "rightMotor");
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
         dcmotorLeft.setDirection(DcMotor.Direction.REVERSE);
         dcmotorRight.setDirection(DcMotor.Direction.FORWARD);
+
+        // grab the imu
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+
+        // Set up the parameters with which we will use our IMU. Note that integration
+        // algorithm here just reports accelerations to the logcat log; it doesn't actually
+        // provide positional information.
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+
+        // set typical parameters
+        parameters.mode                = BNO055IMU.SensorMode.IMU;
+        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.loggingEnabled      = false;
+        // deal with these parameters later
+        // parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+        // parameters.loggingTag          = "IMU";
+        // parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+
+        // start initializing the IMU
+        telemetry.addData("IMU", "initialize");
+        imu.initialize(parameters);
 
         // Tell the driver that initialization is complete.
         telemetry.addData("Status", "Init demo done");
@@ -89,6 +130,14 @@ public class Demo extends OpMode
      */
     @Override
     public void init_loop() {
+
+        // look at the imu
+        if (imu.isGyroCalibrated()) {
+            telemetry.addData("IMU", "calibrated");
+        } else {
+            telemetry.addData("IMU", "calibrating");
+        }
+
     }
 
     /*
@@ -131,6 +180,37 @@ public class Demo extends OpMode
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
         telemetry.addData("Motors", "left (%.2f), right (%.2f)", powerLeft, powerRight);
+
+        // query the imu
+        // Acquiring the angles is relatively expensive; we don't want
+        // to do that in each of the three items that need that info, as that's
+        // three times the necessary expense.
+        angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+
+        // telemetry.addData("imu status", imu.getSystemStatus().toShortString());
+        // telemetry.addData("imu calib", imu.getCalibrationStatus().toString());
+
+        // heading, pitch, and roll depend on how the Expansion Hub is installed on the robot.
+        // So this choice depends on the robot.
+        // If the EH is flat, then the firstAngle is the heading
+        // If flat and the short axis is forward, then second Angle is the pitch
+        telemetry.addData("imu", "heading %.1f roll %.1f pitch %.1f",
+                angles.firstAngle,
+                angles.secondAngle,
+                angles.thirdAngle);
+
+        if (boolGravity) {
+            // get the gravity measurements
+            gravity  = imu.getGravity();
+
+            // report the gravity measurements
+            telemetry.addData("gravity", gravity.toString());
+            telemetry.addData("gravmag", "%8.3f m/s/s",
+                    Math.sqrt(gravity.xAccel * gravity.xAccel +
+                            gravity.yAccel * gravity.yAccel +
+                            gravity.zAccel * gravity.zAccel));
+        }
+
     }
 
     /*
@@ -138,6 +218,7 @@ public class Demo extends OpMode
      */
     @Override
     public void stop() {
+        //
     }
 
 }
