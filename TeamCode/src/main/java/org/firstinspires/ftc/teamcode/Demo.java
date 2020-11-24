@@ -34,6 +34,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -67,19 +68,102 @@ public class Demo extends OpMode
     private DcMotorEx dcmotorLeft = null;
     private DcMotorEx dcmotorRight = null;
 
-    // drive mode
+    // drive mode: true is POVMode, false is TankMode
     private boolean boolPOVDrive = true;
 
     // gyro
     // in previous years, the gyro was unstable: it would cause some inits to hang
     // For Ultimate Goal, it is supposedly much more stable.
-    // The documentation is not clear which imu is in the Expansion Hub.
+    // I have had the imu fail to initialize.
     private BNO055IMU imu;
     // State used for updating telemetry
     private Orientation angles;
     // boolGravity == true -> take and report gravity measurements
     private boolean boolGravity = true;
     private Acceleration gravity;
+
+
+    // Info for the robot pose
+    // TODO: abstract to an Odometry class
+
+    // robot parameters
+    // the wheel diameters are 90mm nominal
+    private double mWheelDiameterLeft = 0.090;
+    private double mWheelDiameterRight = 0.090;
+
+    // half the distance between the wheels
+    // the new wheel separation 13 + 15/16
+    double distWheel = (14.0 - (1.0/16.0)) * 0.0254 / 2;
+
+    // The CoreHex motor has 4 ticks per revolution and is geared down by 72
+    //   those attributes should be in the DcMotor class
+
+    // The HD Hex Motor has 56 ticks per revolution
+    //    or so claims http://www.revrobotics.com/content/docs/HDMotorEncoderGuide.pdf
+    //    the 20:1 is geared 20 to 1
+    //    the 40:1 is geared 40 to 1
+    // The HD Hex Motor is also used with the Ultraplanetary cartridges
+    //    the 3:1 cartridge is actually 84:29 (2.9...)
+    //    the 4:1 cartridge is actually 76:21 (3.6...)
+    //    the 5:1 cartridge is actually 68:13 (5.2...)
+    private final double HD_HEX_GEAR_CART_3_1 = 84.0/29.0;
+    private final double HD_HEX_GEAR_CART_4_1 = 76.0/21.0;
+    private final double HD_HEX_GEAR_CART_5_1 = 68.0/13.0;
+
+    // calculate the wheel's ticks per revolution
+    //   Apparently, we only see 1/2 the counts that REV claims (28 instead of 56)
+    double ticksPerWheelRev = (56.0/2.0) * HD_HEX_GEAR_CART_5_1 * HD_HEX_GEAR_CART_4_1;
+
+    // derived robot parameters
+    // Distance per tick
+    //   leaving the units vague at this point
+
+    // the distance per tick for each wheel = circumference / ticks
+    private double distpertickLeft = mWheelDiameterLeft * Math.PI / (ticksPerWheelRev);
+    private double distpertickRight = mWheelDiameterRight * Math.PI / (ticksPerWheelRev);
+
+    // the robot pose
+    //   can have .updatePose(), .getPose(), .setPose()
+    //   using static should allow the Pose to be carried over from Autonomous to Teleop
+    //     Autonomous can set the initial pose
+    //     When Teleop starts, it can use the existing Pose
+    //        If there was no autonomous, then initial Pose is random
+    //        A button press during teleop's init_loop could set a known Pose
+    static double xPose = 0.0;
+    static double yPose = 0.0;
+    static double thetaPose = 0.0;
+
+    // this shadow state need not be static
+    double xPoseInches = 0.0;
+    double yPoseInches = 0.0;
+    double thetaPoseDegrees = 0.0;
+
+    // encoder counts
+    // There's a subtle issue here
+    //    If robot is not moving, it is OK to set these values to the current encoder counts
+    //    That could always happen during .init()
+    private int cEncoderLeft;
+    private int cEncoderRight;
+
+    /**
+     * Want to use this code with last year's robot, but it has different parameters
+     */
+    void setRobot2019() {
+        // set the wheel diameters
+        mWheelDiameterLeft = 0.090;
+        mWheelDiameterRight = 0.090;
+
+        // set the wheel half separation
+        distWheel =  (0.305 / 2) * 360.0 / 362.0;
+
+        // ticks per wheel revolution
+        // CoreHex motor...
+        ticksPerWheelRev = 4 * 72;
+
+        // derived values
+        distpertickLeft = mWheelDiameterLeft * Math.PI / (ticksPerWheelRev);
+        distpertickRight = mWheelDiameterRight * Math.PI / (ticksPerWheelRev);
+    }
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -98,6 +182,17 @@ public class Demo extends OpMode
         // Reverse the motor that runs backwards when connected directly to the battery
         dcmotorLeft.setDirection(DcMotor.Direction.REVERSE);
         dcmotorRight.setDirection(DcMotor.Direction.FORWARD);
+
+        // odometry
+        setRobot2019();
+        // remember the current encoder counts to do odometry
+        // DcMotor Direction also affects the encoder counts
+        // remember the current encoder counts
+        // Should always do this (even if not resetting the Pose)
+        cEncoderLeft = dcmotorLeft.getCurrentPosition();
+        cEncoderRight = dcmotorRight.getCurrentPosition();
+
+
 
         // grab the imu
         imu = hardwareMap.get(BNO055IMU.class, "imu");
@@ -157,6 +252,9 @@ public class Demo extends OpMode
         double powerLeft;
         double powerRight;
 
+        // odometry
+        updateRobotPose();
+
         // Choose to drive using either Tank Mode, or POV Mode
         if (boolPOVDrive) {
             // POV Mode uses left stick to go forward, and right stick to turn.
@@ -180,6 +278,10 @@ public class Demo extends OpMode
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
         telemetry.addData("Motors", "left (%.2f), right (%.2f)", powerLeft, powerRight);
+
+        // report the current pose
+        // TODO: angle OK; distance is off
+        telemetry.addData("Pose", "x %8.2f %8.2f %8.2f", xPose, yPose, thetaPoseDegrees);
 
         // query the imu
         // Acquiring the angles is relatively expensive; we don't want
@@ -220,5 +322,90 @@ public class Demo extends OpMode
     public void stop() {
         //
     }
+
+
+    /**
+     * Update the robot pose.
+     * Uses small angle approximations.
+     * See COS495-Odometry by Chris Clark, 2011,
+     * <a href="https://www.cs.princeton.edu/courses/archive/fall11/cos495/COS495-Lecture5-Odometry.pdf">https://www.cs.princeton.edu/courses/archive/fall11/cos495/COS495-Lecture5-Odometry.pdf</a>
+     */
+    private void updateRobotPose() {
+        // several calculations are needed
+
+        // get the new encoder positions
+        int cLeft = dcmotorLeft.getCurrentPosition();
+        int cRight = dcmotorRight.getCurrentPosition();
+
+        // calculate the arc length deltas
+        int dsLeft = cLeft - cEncoderLeft;
+        int dsRight = cRight - cEncoderRight;
+
+        // save the new encoder positions for the next time around
+        cEncoderLeft = cLeft;
+        cEncoderRight = cRight;
+
+        // calculate the distance the wheels moved
+        double distL = dsLeft * distpertickLeft;
+        double distR = dsRight * distpertickRight;
+
+        // approximate the arc length as the average of the left and right arcs
+        double ds = (distR + distL) / 2;
+        // approximate the angular change as the difference in the arcs divided by wheel offset from
+        // center of rotation.
+        double dtheta = (distR - distL) / ( 2 * distWheel);
+
+        // approximate the hypotenuse as just ds
+        // approximate the average change in direction as one half the total angular change
+        double dx = ds * Math.cos(thetaPose + 0.5 * dtheta);
+        double dy = ds * Math.sin(thetaPose + 0.5 * dtheta);
+
+        // update the current pose
+        xPose = xPose + dx;
+        yPose = yPose + dy;
+        thetaPose = thetaPose + dtheta;
+
+        // convert to inches and degrees
+        xPoseInches = xPose / 0.0254;
+        yPoseInches = yPose / 0.0254;
+        thetaPoseDegrees = thetaPose * (180.0 / Math.PI);
+    }
+
+    void setPoseInches(double x, double y, double theta) {
+        // convert to meters and set state variables
+        xPose = x * 0.0254;
+        yPose = y * 0.0254;
+        thetaPose = theta * (Math.PI / 180.0);
+
+        // copy to imperial to shadow state for consistency
+        xPoseInches = x;
+        yPoseInches = y;
+        thetaPoseDegrees = theta;
+    }
+
+    /**
+     * Read the battery voltage from all available voltage sensors
+     * @return the minimum battery voltage or positive infinity
+     */
+    private double getBatteryVoltage() {
+        // set an infinite voltage
+        double result = Double.POSITIVE_INFINITY;
+
+        // examine each voltage sensors
+        for (VoltageSensor sensor : hardwareMap.voltageSensor) {
+            // get the voltage reading for that sensor
+            double voltage = sensor.getVoltage();
+
+            // if the voltage is reasonable
+            if (voltage > 0) {
+                // then accumulate the result
+                result = Math.min(result, voltage);
+            }
+        }
+
+        // return the minimum voltage
+        return result;
+    }
+
 
 }
