@@ -216,6 +216,8 @@ public class Demo extends OpMode
         telemetry.addData("IMU", "initialize");
         imu.initialize(parameters);
 
+        // TODO: Initialize Tensor Flow
+
         // Tell the driver that initialization is complete.
         telemetry.addData("Status", "Init demo done");
     }
@@ -232,6 +234,9 @@ public class Demo extends OpMode
         } else {
             telemetry.addData("IMU", "calibrating");
         }
+
+        // TODO: use Tensor Flow to determine height of the stack.
+        // The height might vary over time. It should start at "quad".
 
     }
 
