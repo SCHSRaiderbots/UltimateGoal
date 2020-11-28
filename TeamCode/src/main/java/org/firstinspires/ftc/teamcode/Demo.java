@@ -64,6 +64,10 @@ public class Demo extends OpMode
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
 
+    // Robot voltage
+    // TODO: issues with not finding an expansion hub
+    private double voltage;
+
     // drive motors
     private DcMotorEx dcmotorLeft = null;
     private DcMotorEx dcmotorRight = null;
@@ -81,7 +85,7 @@ public class Demo extends OpMode
     // boolGravity == true -> take and report gravity measurements
     private boolean boolGravity = true;
     private Acceleration gravity;
-
+    private AxesOrder axesorder = AxesOrder.ZYX;
 
     // Info for the robot pose
     // TODO: abstract to an Odometry class
@@ -129,8 +133,10 @@ public class Demo extends OpMode
     //     When Teleop starts, it can use the existing Pose
     //        If there was no autonomous, then initial Pose is random
     //        A button press during teleop's init_loop could set a known Pose
+    // these values are in meters
     static double xPose = 0.0;
     static double yPose = 0.0;
+    // angle is in radians
     static double thetaPose = 0.0;
 
     // this shadow state need not be static
@@ -145,11 +151,27 @@ public class Demo extends OpMode
     private int cEncoderLeft;
     private int cEncoderRight;
 
+    // which alliance I'm on
+    enum Alliance {RED, BLUE}
+    private Alliance alliance = Alliance.BLUE;
+    private String startLine = "right";
+
+    // The game has 3 TargetZones
+    enum TargetZone {A, B, C}
+    // TensorFlow should figure out the correct TargetZone
+    // 0 rings = LandingZone.A, 1 ring = LandingZone.B, 4 rings LandingZone.C
+    private TargetZone targetZone = TargetZone.C;
+
+    private String[] astrRoute = {"r1", "r2", "r3", "r4"};
+    private int cRoute = astrRoute.length;
+    int iRoute = 0;
+    boolean bRouteChanging = false;
+
     /**
      * Want to use this code with last year's robot, but it has different parameters
      */
     void setRobot2019() {
-        // set the wheel diameters
+        // set the wheel diameters to 90 mm
         mWheelDiameterLeft = 0.090;
         mWheelDiameterRight = 0.090;
 
@@ -157,12 +179,17 @@ public class Demo extends OpMode
         distWheel =  (0.305 / 2) * 360.0 / 362.0;
 
         // ticks per wheel revolution
-        // CoreHex motor...
+        // CoreHex motor... 4 ticks per revolutions
+        // CoreHex motor... 1:72 gear ratio
+        // REV specs also say 288 ticks per revolution
         ticksPerWheelRev = 4 * 72;
 
         // derived values
         distpertickLeft = mWheelDiameterLeft * Math.PI / (ticksPerWheelRev);
         distpertickRight = mWheelDiameterRight * Math.PI / (ticksPerWheelRev);
+
+        // the AxesOrder for the 2019 robot.
+        axesorder = AxesOrder.ZXY;
     }
 
     /*
@@ -171,6 +198,8 @@ public class Demo extends OpMode
     @Override
     public void init() {
         telemetry.addData("Status", "Init demo start");
+
+        voltage = getBatteryVoltage();
 
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
@@ -191,8 +220,6 @@ public class Demo extends OpMode
         // Should always do this (even if not resetting the Pose)
         cEncoderLeft = dcmotorLeft.getCurrentPosition();
         cEncoderRight = dcmotorRight.getCurrentPosition();
-
-
 
         // grab the imu
         imu = hardwareMap.get(BNO055IMU.class, "imu");
@@ -235,9 +262,46 @@ public class Demo extends OpMode
             telemetry.addData("IMU", "calibrating");
         }
 
+        // TODO: check other health issues
+        telemetry.addData("Health", "Battery %.2f", voltage);
+
+        // process some simple commands to configure the robot
+        if (gamepad1.x) {
+            // x is a blue button
+            alliance = Alliance.BLUE;
+        }
+        if (gamepad1.b) {
+            // b is a red button
+            alliance = Alliance.RED;
+        }
+        telemetry.addData("Alliance", alliance);
+
+        if (gamepad1.dpad_left) {
+            startLine = "left";
+        }
+        if (gamepad1.dpad_right) {
+            startLine = "right";
+        }
+        telemetry.addData("StartLine", startLine);
+
+        // non idempotent buttons...
+        if (!bRouteChanging && gamepad1.dpad_up) {
+            iRoute = (iRoute + 1) % cRoute;
+            bRouteChanging = true;
+        }
+        if (!bRouteChanging && gamepad1.dpad_down) {
+            iRoute = (iRoute + cRoute - 1) % cRoute;
+            bRouteChanging = true;
+        }
+        if (!gamepad1.dpad_up && !gamepad1.dpad_down) {
+            bRouteChanging = false;
+        }
+        telemetry.addData("Route", astrRoute[iRoute]);
+
         // TODO: use Tensor Flow to determine height of the stack.
         // The height might vary over time. It should start at "quad".
 
+        telemetry.addData("TargetZone", targetZone);
     }
 
     /*
@@ -276,6 +340,12 @@ public class Demo extends OpMode
             powerRight = -gamepad1.right_stick_y ;
         }
 
+        // process some simple commands
+        // reset the pose
+        if (gamepad1.y) {
+            setPoseInches(0, 0, 0);
+        }
+
         // Send calculated power to wheels
         dcmotorLeft.setPower(powerLeft);
         dcmotorRight.setPower(powerRight);
@@ -285,14 +355,14 @@ public class Demo extends OpMode
         telemetry.addData("Motors", "left (%.2f), right (%.2f)", powerLeft, powerRight);
 
         // report the current pose
-        // TODO: angle OK; distance is off
         telemetry.addData("Pose", "x %8.2f %8.2f %8.2f", xPose, yPose, thetaPoseDegrees);
 
         // query the imu
         // Acquiring the angles is relatively expensive; we don't want
         // to do that in each of the three items that need that info, as that's
         // three times the necessary expense.
-        angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        angles = imu.getAngularOrientation(AxesReference.INTRINSIC, axesorder, AngleUnit.DEGREES);
+
 
         // telemetry.addData("imu status", imu.getSystemStatus().toShortString());
         // telemetry.addData("imu calib", imu.getCalibrationStatus().toString());
@@ -306,6 +376,7 @@ public class Demo extends OpMode
                 angles.secondAngle,
                 angles.thirdAngle);
 
+        // if we are checking the accelerometers
         if (boolGravity) {
             // get the gravity measurements
             gravity  = imu.getGravity();
@@ -338,21 +409,21 @@ public class Demo extends OpMode
     private void updateRobotPose() {
         // several calculations are needed
 
-        // get the new encoder positions
-        int cLeft = dcmotorLeft.getCurrentPosition();
-        int cRight = dcmotorRight.getCurrentPosition();
+        // get the current encoder positions
+        int ticksLeft = dcmotorLeft.getCurrentPosition();
+        int ticksRight = dcmotorRight.getCurrentPosition();
 
-        // calculate the arc length deltas
-        int dsLeft = cLeft - cEncoderLeft;
-        int dsRight = cRight - cEncoderRight;
+        // calculate change in encoder ticks from last time step
+        int dticksLeft = ticksLeft - cEncoderLeft;
+        int dticksRight = ticksRight - cEncoderRight;
 
         // save the new encoder positions for the next time around
-        cEncoderLeft = cLeft;
-        cEncoderRight = cRight;
+        cEncoderLeft = ticksLeft;
+        cEncoderRight = ticksRight;
 
         // calculate the distance the wheels moved
-        double distL = dsLeft * distpertickLeft;
-        double distR = dsRight * distpertickRight;
+        double distL = dticksLeft * distpertickLeft;
+        double distR = dticksRight * distpertickRight;
 
         // approximate the arc length as the average of the left and right arcs
         double ds = (distR + distL) / 2;
@@ -377,7 +448,7 @@ public class Demo extends OpMode
     }
 
     void setPoseInches(double x, double y, double theta) {
-        // convert to meters and set state variables
+        // convert inches to meters and set state variables
         xPose = x * 0.0254;
         yPose = y * 0.0254;
         thetaPose = theta * (Math.PI / 180.0);
