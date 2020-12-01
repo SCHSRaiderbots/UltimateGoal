@@ -207,6 +207,8 @@ public class Demo extends OpMode
         // we need to be careful here.
         // Notice the initial button press and act
         //   but ignore all subsequent times the button is still active
+        // TODO: a better way would be to use gamepad1Copy.copy(gamepad1)
+        //   fields in a Gamepad may be read or written
         if (!bRouteChanging && gamepad1.dpad_up) {
             // increment the route
             iRoute = (iRoute + 1) % cRoute;
