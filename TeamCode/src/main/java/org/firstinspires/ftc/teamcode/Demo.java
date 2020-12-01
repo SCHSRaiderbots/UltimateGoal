@@ -44,6 +44,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
+import static org.firstinspires.ftc.teamcode.Motion.*;
+
 /**
  * This file contains an example of an iterative (Non-Linear) "OpMode".
  * An OpMode is a 'program' that runs in either the autonomous or the teleop period of an FTC match.
@@ -65,7 +67,6 @@ public class Demo extends OpMode
     private ElapsedTime runtime = new ElapsedTime();
 
     // Robot voltage
-    // TODO: issues with not finding an expansion hub
     private double voltage;
 
     // drive motors
@@ -75,7 +76,7 @@ public class Demo extends OpMode
     // drive mode: true is POVMode, false is TankMode
     private boolean boolPOVDrive = true;
 
-    // gyro
+    // imu / gyro
     // in previous years, the gyro was unstable: it would cause some inits to hang
     // For Ultimate Goal, it is supposedly much more stable.
     // I have had the imu fail to initialize.
@@ -85,71 +86,12 @@ public class Demo extends OpMode
     // boolGravity == true -> take and report gravity measurements
     private boolean boolGravity = true;
     private Acceleration gravity;
-    private AxesOrder axesorder = AxesOrder.ZYX;
+    AxesOrder axesorder = AxesOrder.ZYX;
 
-    // Info for the robot pose
-    // TODO: abstract to an Odometry class
+    // Some Game parameters...
 
-    // robot parameters
-    // the wheel diameters are 90mm nominal
-    private double mWheelDiameterLeft = 0.090;
-    private double mWheelDiameterRight = 0.090;
-
-    // half the distance between the wheels
-    // the new wheel separation 13 + 15/16
-    double distWheel = (14.0 - (1.0/16.0)) * 0.0254 / 2;
-
-    // The CoreHex motor has 4 ticks per revolution and is geared down by 72
-    //   those attributes should be in the DcMotor class
-
-    // The HD Hex Motor has 56 ticks per revolution
-    //    or so claims http://www.revrobotics.com/content/docs/HDMotorEncoderGuide.pdf
-    //    the 20:1 is geared 20 to 1
-    //    the 40:1 is geared 40 to 1
-    // The HD Hex Motor is also used with the Ultraplanetary cartridges
-    //    the 3:1 cartridge is actually 84:29 (2.9...)
-    //    the 4:1 cartridge is actually 76:21 (3.6...)
-    //    the 5:1 cartridge is actually 68:13 (5.2...)
-    private final double HD_HEX_GEAR_CART_3_1 = 84.0/29.0;
-    private final double HD_HEX_GEAR_CART_4_1 = 76.0/21.0;
-    private final double HD_HEX_GEAR_CART_5_1 = 68.0/13.0;
-
-    // calculate the wheel's ticks per revolution
-    //   Apparently, we only see 1/2 the counts that REV claims (28 instead of 56)
-    double ticksPerWheelRev = (56.0/2.0) * HD_HEX_GEAR_CART_5_1 * HD_HEX_GEAR_CART_4_1;
-
-    // derived robot parameters
-    // Distance per tick
-    //   leaving the units vague at this point
-
-    // the distance per tick for each wheel = circumference / ticks
-    private double distpertickLeft = mWheelDiameterLeft * Math.PI / (ticksPerWheelRev);
-    private double distpertickRight = mWheelDiameterRight * Math.PI / (ticksPerWheelRev);
-
-    // the robot pose
-    //   can have .updatePose(), .getPose(), .setPose()
-    //   using static should allow the Pose to be carried over from Autonomous to Teleop
-    //     Autonomous can set the initial pose
-    //     When Teleop starts, it can use the existing Pose
-    //        If there was no autonomous, then initial Pose is random
-    //        A button press during teleop's init_loop could set a known Pose
-    // these values are in meters
-    static double xPose = 0.0;
-    static double yPose = 0.0;
-    // angle is in radians
-    static double thetaPose = 0.0;
-
-    // this shadow state need not be static
-    double xPoseInches = 0.0;
-    double yPoseInches = 0.0;
-    double thetaPoseDegrees = 0.0;
-
-    // encoder counts
-    // There's a subtle issue here
-    //    If robot is not moving, it is OK to set these values to the current encoder counts
-    //    That could always happen during .init()
-    private int cEncoderLeft;
-    private int cEncoderRight;
+    // Games are Traditional or Remote
+    //   that distinction affects field size and mid-goal shooting
 
     // which alliance I'm on
     enum Alliance {RED, BLUE}
@@ -166,31 +108,6 @@ public class Demo extends OpMode
     private int cRoute = astrRoute.length;
     int iRoute = 0;
     boolean bRouteChanging = false;
-
-    /**
-     * Want to use this code with last year's robot, but it has different parameters
-     */
-    void setRobot2019() {
-        // set the wheel diameters to 90 mm
-        mWheelDiameterLeft = 0.090;
-        mWheelDiameterRight = 0.090;
-
-        // set the wheel half separation
-        distWheel =  (0.305 / 2) * 360.0 / 362.0;
-
-        // ticks per wheel revolution
-        // CoreHex motor... 4 ticks per revolutions
-        // CoreHex motor... 1:72 gear ratio
-        // REV specs also say 288 ticks per revolution
-        ticksPerWheelRev = 4 * 72;
-
-        // derived values
-        distpertickLeft = mWheelDiameterLeft * Math.PI / (ticksPerWheelRev);
-        distpertickRight = mWheelDiameterRight * Math.PI / (ticksPerWheelRev);
-
-        // the AxesOrder for the 2019 robot.
-        axesorder = AxesOrder.ZXY;
-    }
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -212,14 +129,15 @@ public class Demo extends OpMode
         dcmotorLeft.setDirection(DcMotor.Direction.REVERSE);
         dcmotorRight.setDirection(DcMotor.Direction.FORWARD);
 
+        // After the drive motors are configured, inform the Motion class
         // odometry
+        setRobot(dcmotorLeft, dcmotorRight);
+        // use an old robot
+        // TODO: use a phontom switch to determine the actual robot
         setRobot2019();
-        // remember the current encoder counts to do odometry
-        // DcMotor Direction also affects the encoder counts
-        // remember the current encoder counts
-        // Should always do this (even if not resetting the Pose)
-        cEncoderLeft = dcmotorLeft.getCurrentPosition();
-        cEncoderRight = dcmotorRight.getCurrentPosition();
+        // TODO: this is a gyro parameter for the 2019 robot
+        // the AxesOrder for the 2019 robot.
+        axesorder = AxesOrder.ZXY;
 
         // grab the imu
         imu = hardwareMap.get(BNO055IMU.class, "imu");
@@ -254,6 +172,7 @@ public class Demo extends OpMode
      */
     @Override
     public void init_loop() {
+        // We could updateRobotPose() here
 
         // look at the imu
         if (imu.isGyroCalibrated()) {
@@ -285,11 +204,16 @@ public class Demo extends OpMode
         telemetry.addData("StartLine", startLine);
 
         // non idempotent buttons...
+        // we need to be careful here.
+        // Notice the initial button press and act
+        //   but ignore all subsequent times the button is still active
         if (!bRouteChanging && gamepad1.dpad_up) {
+            // increment the route
             iRoute = (iRoute + 1) % cRoute;
             bRouteChanging = true;
         }
         if (!bRouteChanging && gamepad1.dpad_down) {
+            // decrement the route
             iRoute = (iRoute + cRoute - 1) % cRoute;
             bRouteChanging = true;
         }
@@ -399,65 +323,6 @@ public class Demo extends OpMode
         //
     }
 
-
-    /**
-     * Update the robot pose.
-     * Uses small angle approximations.
-     * See COS495-Odometry by Chris Clark, 2011,
-     * <a href="https://www.cs.princeton.edu/courses/archive/fall11/cos495/COS495-Lecture5-Odometry.pdf">https://www.cs.princeton.edu/courses/archive/fall11/cos495/COS495-Lecture5-Odometry.pdf</a>
-     */
-    private void updateRobotPose() {
-        // several calculations are needed
-
-        // get the current encoder positions
-        int ticksLeft = dcmotorLeft.getCurrentPosition();
-        int ticksRight = dcmotorRight.getCurrentPosition();
-
-        // calculate change in encoder ticks from last time step
-        int dticksLeft = ticksLeft - cEncoderLeft;
-        int dticksRight = ticksRight - cEncoderRight;
-
-        // save the new encoder positions for the next time around
-        cEncoderLeft = ticksLeft;
-        cEncoderRight = ticksRight;
-
-        // calculate the distance the wheels moved
-        double distL = dticksLeft * distpertickLeft;
-        double distR = dticksRight * distpertickRight;
-
-        // approximate the arc length as the average of the left and right arcs
-        double ds = (distR + distL) / 2;
-        // approximate the angular change as the difference in the arcs divided by wheel offset from
-        // center of rotation.
-        double dtheta = (distR - distL) / ( 2 * distWheel);
-
-        // approximate the hypotenuse as just ds
-        // approximate the average change in direction as one half the total angular change
-        double dx = ds * Math.cos(thetaPose + 0.5 * dtheta);
-        double dy = ds * Math.sin(thetaPose + 0.5 * dtheta);
-
-        // update the current pose
-        xPose = xPose + dx;
-        yPose = yPose + dy;
-        thetaPose = thetaPose + dtheta;
-
-        // convert to inches and degrees
-        xPoseInches = xPose / 0.0254;
-        yPoseInches = yPose / 0.0254;
-        thetaPoseDegrees = thetaPose * (180.0 / Math.PI);
-    }
-
-    void setPoseInches(double x, double y, double theta) {
-        // convert inches to meters and set state variables
-        xPose = x * 0.0254;
-        yPose = y * 0.0254;
-        thetaPose = theta * (Math.PI / 180.0);
-
-        // copy to imperial to shadow state for consistency
-        xPoseInches = x;
-        yPoseInches = y;
-        thetaPoseDegrees = theta;
-    }
 
     /**
      * Read the battery voltage from all available voltage sensors
