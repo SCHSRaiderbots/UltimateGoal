@@ -126,13 +126,14 @@ public class Motion {
         mWheelDiameterRight = 0.090;
 
         // set the wheel half separation
-        distWheel =  (0.305 / 2) * 360.0 / 362.0;
+        // measured wheel separation times a fudge factor
+        distWheel =  (0.305 / 2) * (360.0 / 362.0);
 
         // ticks per wheel revolution
         // CoreHex motor... 4 ticks per revolutions
         // CoreHex motor... 1:72 gear ratio
         // REV specs also say 288 ticks per revolution
-        ticksPerWheelRev = 4 * 72;
+        ticksPerWheelRev = CORE_HEX_TICKS_PER_REV;
 
         // derived values
         distpertickLeft = mWheelDiameterLeft * Math.PI / (ticksPerWheelRev);
