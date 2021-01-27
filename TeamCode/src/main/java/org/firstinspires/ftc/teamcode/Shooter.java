@@ -4,7 +4,6 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
@@ -30,6 +29,9 @@ public class Shooter extends OpMode {
         if (dcmotorShooter != null) {
             // set reverse direction
             dcmotorShooter.setDirection(DcMotor.Direction.REVERSE);
+
+            // describe the motor...
+            LogDevice.dump("shooter", dcmotorShooter);
         }
 
     }
@@ -63,12 +65,12 @@ public class Shooter extends OpMode {
                 dcmotorShooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 // trying to get 1 rps, but failing
                 // spins way too fast.
-                // try fudge factor of 28
+                // try fudge factor of 20
                 //   1 rps -- intermittent motion! (need to adjust PIDF?) (Battery was also low)
                 //   10 rps -- better control, but will not shoot
                 //   50 rps -- marginal shooter; reports 1.78/3.3
                 //  100 rps -- maxed out velocity
-                dcmotorShooter.setVelocity(360.0 * 50.0 / 28.0, AngleUnit.DEGREES);
+                dcmotorShooter.setVelocity(360.0 * 50.0 / 20.0, AngleUnit.DEGREES);
                 // dcmotorShooter.setVelocity(28);
             }
 
@@ -79,7 +81,7 @@ public class Shooter extends OpMode {
                 // turn on the motor
                 dcmotorShooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 dcmotorShooter.setVelocity(60.0 * 28.0);
-                dcmotorShooter.setPower(1.0);
+                // dcmotorShooter.setPower(1.0);
                 // reads 84.0 rps when I expected 60.
             }
 
@@ -90,10 +92,11 @@ public class Shooter extends OpMode {
                 // turn on the motor
                 // we'll use setPower() to start, but PID velocity control would be better
                 // 3.2 rps reported, but that is suspect
+                dcmotorShooter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 dcmotorShooter.setPower(1.0);
             }
 
-            // if the driver presses a button
+            // if the driver presses the b button, turn off the shooter
             if (gamepad1.b) {
                 // remember the shooter is off
                 bShooter = false;
@@ -106,8 +109,17 @@ public class Shooter extends OpMode {
             }
 
             // report the motor velocity
+            // TODO: these numbers do not make sense yet
+            //   OK, starting to make sense; motor presumes divide by 20.
             // try revs per second
-            telemetry.addData("Shooter", "vel %f", 28.0 * dcmotorShooter.getVelocity(AngleUnit.DEGREES)/360.0);
+            telemetry.addData("Shooter", "vel %f", 20.0 * dcmotorShooter.getVelocity(AngleUnit.DEGREES)/360.0);
+            // use known ticks to get a value
+            // expect velocity to be in ticks per second; dividing by 28 should be rotations per second
+            // press x at 11.0 V, get 97 and 69.
+            //   took out .setPower(1.0), got 84 and 60 (I had set 60).
+            //   so take 84/28 = 3
+            // press y, get 97 and 69, so those are flat out values for 11.40 V.
+            telemetry.addData("Shooter (from ticks)", dcmotorShooter.getVelocity()/28.0);
         }
         else {
             telemetry.addData("Shooter", "not present");
