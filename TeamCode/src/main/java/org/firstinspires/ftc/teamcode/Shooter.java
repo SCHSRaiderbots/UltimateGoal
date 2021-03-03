@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
@@ -15,6 +16,8 @@ public class Shooter extends OpMode {
 
     // whether the shooter motor is on
     boolean bShooter = false;
+
+    Servo servoShoot = null;
 
     @Override
     public void init() {
@@ -34,6 +37,8 @@ public class Shooter extends OpMode {
             LogDevice.dump("shooter", dcmotorShooter);
         }
 
+        servoShoot = hardwareMap.tryGet(Servo.class, "servoShoot");
+
     }
 
     @Override
@@ -48,6 +53,14 @@ public class Shooter extends OpMode {
 
     @Override
     public void loop() {
+
+        if (servoShoot != null) {
+            // TODO: clip to [0,1]
+            servoShoot.setPosition(gamepad1.right_stick_y);
+            telemetry.addData("servo", "servopos %f", gamepad1.right_stick_y);
+        } else {
+            telemetry.addData("servo", "no shooter servo");
+        }
 
         // only process the shooter motor if one was found...
         if (dcmotorShooter != null) {
@@ -120,6 +133,7 @@ public class Shooter extends OpMode {
             //   so take 84/28 = 3
             // press y, get 97 and 69, so those are flat out values for 11.40 V.
             telemetry.addData("Shooter (from ticks)", dcmotorShooter.getVelocity()/28.0);
+            telemetry.addData("Shooter velocity", "vel %5.2f m/s", Math.PI * 0.090 * dcmotorShooter.getVelocity()/28.);
         }
         else {
             telemetry.addData("Shooter", "not present");
