@@ -61,6 +61,9 @@ public class HelloShooter extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotorEx shooterMotor = null;
 
+    private DcMotorEx leftDrive = null;
+    private DcMotorEx rightDrive = null;
+
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
@@ -71,9 +74,15 @@ public class HelloShooter extends LinearOpMode {
         // step (using the FTC Robot Controller app on the phone).
         shooterMotor = hardwareMap.get(DcMotorEx.class, "shooterMotor");
 
+        leftDrive  = hardwareMap.get(DcMotorEx.class, "leftMotor");
+        rightDrive = hardwareMap.get(DcMotorEx.class, "rightMotor");
+
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
         shooterMotor.setDirection(DcMotor.Direction.FORWARD);
+
+        leftDrive.setDirection(DcMotor.Direction.FORWARD);
+        rightDrive.setDirection(DcMotor.Direction.REVERSE);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -84,13 +93,20 @@ public class HelloShooter extends LinearOpMode {
 
             // Setup a variable for each drive wheel to save power level for telemetry
             double power;
+            double leftPower;
+            double rightPower;
+
+            double drive = -gamepad1.left_stick_y;
+            double turn  =  gamepad1.right_stick_x;
+            leftPower    = Range.clip(drive + turn, -1.0, 1.0) ;
+            rightPower   = Range.clip(drive - turn, -1.0, 1.0) ;
 
             // Choose to drive using either Tank Mode, or POV Mode
             // Comment out the method that's not used.  The default below is POV.
 
             // POV Mode uses left stick to go forward, and right stick to turn.
             // - This uses basic math to combine motions and is easier to drive straight.
-            double velocity = gamepad1.left_stick_y * 650;
+            double velocity = gamepad2.left_stick_y * 650;
             velocity = Range.clip(velocity, -600, 600) ;
 
             // Tank Mode uses one stick to control each wheel.
@@ -101,9 +117,15 @@ public class HelloShooter extends LinearOpMode {
             // Send calculated power to wheels
             shooterMotor.setVelocity(velocity, AngleUnit.RADIANS);
 
+            leftDrive.setPower(leftPower);
+            rightDrive.setPower(rightPower);
+
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Status", "Motor velocity (tick/sec): " + velocity);
+            telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
+            telemetry.addData("Status", "Motor velocity input (radians): " + velocity);
+            telemetry.addData("Status", "Motor velocity actual (radians): " + shooterMotor.getVelocity(AngleUnit.RADIANS));
+            telemetry.addData("Status", "Motor velocity actual (tick/sec): " + shooterMotor.getVelocity());
             telemetry.update();
         }
     }
