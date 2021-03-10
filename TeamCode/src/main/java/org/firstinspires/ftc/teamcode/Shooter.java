@@ -13,22 +13,23 @@ public class Shooter extends OpMode {
 
     // the shooter motor
     DcMotorEx dcmotorShooter = null;
-
     // whether the shooter motor is on
     boolean bShooter = false;
 
     Servo servoShoot = null;
+    static final double posShooterRest = 0.0;
+    static final double posShooterFire = 0.4;
+    // current shooter position
+    double posShooter = posShooterRest;
 
     @Override
     public void init() {
 
         // find the shooter motor
         // tryGet() method is used so failure to find the motor will not throw an exception
-        // TODO: investigate the type of motoer and its tick count
-        // I believe it is listed as a VersaPlanetary, but no gear ratio is specifified
-        // use RUN_TO_POSITION to figure out encoder counts
         dcmotorShooter = hardwareMap.tryGet(DcMotorEx.class, "motorShooter");
 
+        // if there is a shooter motor, then initialize it
         if (dcmotorShooter != null) {
             // set reverse direction
             dcmotorShooter.setDirection(DcMotor.Direction.REVERSE);
@@ -37,7 +38,16 @@ public class Shooter extends OpMode {
             LogDevice.dump("shooter", dcmotorShooter);
         }
 
+        // initialize the servo that fires the ring
         servoShoot = hardwareMap.tryGet(Servo.class, "servoShoot");
+
+        // if the shooter servo exists, command it to the rest position
+        if (servoShoot != null) {
+            // shooter at rest
+            posShooter = posShooterRest;
+            // command the servo to the current position
+            servoShoot.setPosition(posShooter);
+        }
 
     }
 
@@ -54,12 +64,16 @@ public class Shooter extends OpMode {
     @Override
     public void loop() {
 
+        // is there a firing servo?
         if (servoShoot != null) {
-            // TODO: clip to [0,1]
-            servoShoot.setPosition(gamepad1.right_stick_y);
-            telemetry.addData("servo", "servopos %f", gamepad1.right_stick_y);
-        } else {
-            telemetry.addData("servo", "no shooter servo");
+            // what should the position be?
+            double posSh = (gamepad1.right_bumper)? posShooterFire : posShooterRest;
+
+            // if that position has not been commanded, then command it
+            if (posSh != posShooter) {
+                posShooter = posSh;
+                servoShoot.setPosition(posShooter);
+            }
         }
 
         // only process the shooter motor if one was found...
