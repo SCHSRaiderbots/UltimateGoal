@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp(name="Wobble", group="Iterative Opmode")
@@ -16,6 +17,9 @@ public class Wobble extends OpMode {
 
     // A servo to close the gripper
     private Servo servoGripper;
+    private double posGripper;
+    static final double GRIPPER_OPEN = 0.4;
+    static final double GRIPPER_CLOSED = 0.0;
 
     @Override
     public void init() {
@@ -24,6 +28,12 @@ public class Wobble extends OpMode {
         // find the wobble motor for the arm
         motorWobble = hardwareMap.get(DcMotorEx.class, "motorWobble");
         // configure the motor
+        PIDFCoefficients pidf = new PIDFCoefficients();
+        pidf.p = 10;
+        pidf.i = 0.0;
+        pidf.d = 0.0;
+        pidf.f = 0.0;
+        motorWobble.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, pidf);
         motorWobble.setDirection(DcMotorSimple.Direction.FORWARD);
         // use the motor as a servo
         // first set the target position
@@ -36,6 +46,12 @@ public class Wobble extends OpMode {
 
         // TODO: the PID values for the arm are horrible...
         LogDevice.dump("motorWobble", motorWobble);
+
+        // find the servo gripper
+        servoGripper = hardwareMap.get(Servo.class, "servoGripper");
+        // command it open
+        posGripper = GRIPPER_OPEN;
+        servoGripper.setPosition(posGripper);
 
      }
 
@@ -56,6 +72,12 @@ public class Wobble extends OpMode {
         motorWobble.setTargetPosition(ticksTarget);
         telemetry.addData("Wobble", "target position = %d", ticksTarget);
         telemetry.addData("Wobble", "actual position = %d", motorWobble.getCurrentPosition());
+
+        double posGripperCmd = (gamepad1.left_bumper)? GRIPPER_CLOSED : GRIPPER_OPEN;
+        if (posGripperCmd != posGripper) {
+            posGripper = posGripperCmd;
+            servoGripper.setPosition(posGripper);
+        }
     }
 
     @Override
