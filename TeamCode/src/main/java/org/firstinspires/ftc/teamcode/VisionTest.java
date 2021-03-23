@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
@@ -178,10 +179,44 @@ public class VisionTest extends OpMode {
         // set the license key
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
 
-        // set the camera
-        // TODO: choose phone camera or choose a webcam
-        parameters.cameraDirection = CameraDirection.BACK;
-        // parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam1");
+        // set the camera: either phone camera or webcam
+        // .camera takes precedence
+        // .cameraDirection
+        // .cameraName
+        if (false) {
+            // phone camera - I'm guessing it is the default
+            parameters.cameraDirection = CameraDirection.BACK;
+        } else {
+            // to configure a camera, go to configuration menu, select the configuration, and then click SCAN
+            parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
+            // should not need to set a direction
+            // TODO: how to set resolution?
+            // I have no idea which resolution the camera has selected
+            // TODO: set calibration
+            // TODO: choose the filename
+            // there were zero files
+            Log.d("webcamGLR", String.valueOf(parameters.webcamCalibrationFiles.length));
+            // look with                                       "res/xml/teamwebcamcalibrations.xml"
+            // was /storage/emulated/0/FIRST/webcamcalibrations/res/xml/teamwebcamcalibrations.xml (No such file or directory)
+            // shortened to just teamwebcamcalibrations.xml, but that file was not found.
+            // from http://192.168.49.1:8080/?page=manage.html&pop=true one can upload a calibration file
+            // ~/StudioProjects/UltimateGoal/TeamCode/src/main/res/xml/teamwebcamcalibrations.xml
+            // uploading that file got me past the file not found
+            parameters.addWebcamCalibrationFile("teamwebcamcalibrations.xml");
+            // on open, fdDescriptors not available
+            // not UVC!
+            // vid 13028 pid 37424 serial=null product=HD USB Camera
+            // isModeSupported(Fixed); true
+            // vid=0x32e4,pid=0x9230 1920x1080 null
+            //    640x480
+            //    320x240
+            //    1280x720
+            //    1024x768
+            //    800x600
+            //    1280x1024
+            // looks like 640x480 was chosen with f=0.000,0.000
+            // for the ov2710, a quad stack is seen as a single.
+        }
 
         //  Instantiate the Vuforia engine
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
