@@ -59,6 +59,9 @@ class LogDevice {
         Log.d(TAG, "  position: " + motor.getCurrentPosition());
         // (dcMotor) the target position
         Log.d(TAG, "    TargetPosition: " + motor.getTargetPosition());
+
+        // report the mode
+        Log.d(TAG, " mode: " + motor.getMode());
     }
 
     /**
