@@ -54,7 +54,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="HelloShooterAndDrive", group="SCHS Test")
+@TeleOp(name="HelloShooter", group="SCHS Test")
 //@Disabled
 public class HelloShooter extends LinearOpMode {
 
@@ -87,12 +87,25 @@ public class HelloShooter extends LinearOpMode {
         while (opModeIsActive()) {
 
             //Input velocity from gamepad joystick
-            double velocity = gamepad2.left_stick_y * 650;
-            velocity = Range.clip(velocity, -600, 600) ;
+            double velocity = gamepad2.left_stick_y * 2000;
+            velocity = Range.clip(velocity, -2000, 2000) ;
 
             // Send calculated velocity to shooter motors
-            shooterMotor1.setVelocity(velocity, AngleUnit.RADIANS);
-            shooterMotor2.setVelocity(velocity, AngleUnit.RADIANS);
+            shooterMotor1.setVelocity(velocity);
+            shooterMotor2.setVelocity(velocity);
+
+            //full blast (highest speed and distance) - velocity ~ 2000 ticks/sec
+            double BLAST_SPEED = 2000;
+            double HALF_BLAST = 1000;
+            if (gamepad2.a) {
+                shooterMotor1.setVelocity(BLAST_SPEED);
+                shooterMotor2.setVelocity(BLAST_SPEED);
+            }
+
+            if (gamepad2.b) {
+                shooterMotor1.setVelocity(HALF_BLAST);
+                shooterMotor2.setVelocity(HALF_BLAST);
+            }            
 
             // Show the elapsed game time and shooter motor velocity (input and actual).
             telemetry.addData("Status", "Run Time: " + runtime.toString());

@@ -35,6 +35,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -63,11 +64,14 @@ public class DriveRaiderbot extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
-    private DcMotorEx shooterMotor1 = null;
-    private DcMotorEx shooterMotor2 = null;
+    //private DcMotorEx shooterMotor1 = null;
+    //private DcMotorEx shooterMotor2 = null;
 
     private DcMotorEx leftDrive = null;
     private DcMotorEx rightDrive = null;
+
+    private Servo grabberServo = null;
+    private DcMotorEx grabberMotor = null;
 
     @Override
     public void runOpMode() {
@@ -77,21 +81,24 @@ public class DriveRaiderbot extends LinearOpMode {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        shooterMotor1 = hardwareMap.get(DcMotorEx.class, "shooterMotor1");
-        shooterMotor2 = hardwareMap.get(DcMotorEx.class, "shooterMotor2");
+        //shooterMotor1 = hardwareMap.get(DcMotorEx.class, "shooterMotor1");
+        //shooterMotor2 = hardwareMap.get(DcMotorEx.class, "shooterMotor2");
 
         leftDrive  = hardwareMap.get(DcMotorEx.class, "leftMotor");
         rightDrive = hardwareMap.get(DcMotorEx.class, "rightMotor");
 
+        grabberServo = hardwareMap.get(Servo.class, "grabberServo");
+        grabberMotor = hardwareMap.get(DcMotorEx.class, "grabberMotor");
+
         // Needs one side to be reversed and one side to be forward so that ring shoots out in correct direction
         // Wheels are on either side of ring, so reverse one motor to run backwards to allow ring to launch forward
-        shooterMotor1.setDirection(DcMotor.Direction.FORWARD);
-        shooterMotor2.setDirection(DcMotor.Direction.REVERSE);
+        //shooterMotor1.setDirection(DcMotor.Direction.FORWARD);
+        //shooterMotor2.setDirection(DcMotor.Direction.REVERSE);
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
-        leftDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightDrive.setDirection(DcMotor.Direction.REVERSE);
+        leftDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightDrive.setDirection(DcMotor.Direction.FORWARD);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -124,19 +131,35 @@ public class DriveRaiderbot extends LinearOpMode {
             // rightPower = -gamepad1.right_stick_y ;
 
             // Send calculated power to wheels
-            shooterMotor1.setVelocity(velocity, AngleUnit.RADIANS);
-            shooterMotor2.setVelocity(velocity, AngleUnit.RADIANS);
+            //shooterMotor1.setVelocity(velocity, AngleUnit.RADIANS);
+            //shooterMotor2.setVelocity(velocity, AngleUnit.RADIANS);
 
             leftDrive.setPower(leftPower);
             rightDrive.setPower(rightPower);
+
+
+            //open and close grabber servo with x and y buttons on gamepad2
+            if (gamepad2.x) {
+                grabberServo.setPosition(0);
+            } else if (gamepad2.y) {
+                grabberServo.setPosition(0.998);
+            }
+
+
+            //turn wobble goal arm (grabberMotor) by moving left joystick up and down on gamepad2
+            double grabberPower = -gamepad2.left_stick_y;
+            grabberPower = Range.clip(grabberPower, -1.0, 1.0);
+            grabberMotor.setPower(grabberPower);
+
 
             // Show the elapsed game time and wheel power and shooter motor velocity (input and actual)
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
             telemetry.addData("Status", "Motor velocity input (radians): " + velocity);
             //telemetry.addData("Status", "Motor velocity actual (radians): " + shooterMotor.getVelocity(AngleUnit.RADIANS));
-            telemetry.addData("Status", "Shooter Motor 1 velocity actual (tick/sec): " + shooterMotor1.getVelocity());
-            telemetry.addData("Status", "Shooter Motor 2 velocity actual (tick/sec): " + shooterMotor2.getVelocity());
+            //telemetry.addData("Status", "Shooter Motor 1 velocity actual (tick/sec): " + shooterMotor1.getVelocity());
+            //telemetry.addData("Status", "Shooter Motor 2 velocity actual (tick/sec): " + shooterMotor2.getVelocity());
+            telemetry.addData("Status", "Grabber Servo Position: " + grabberServo.getPosition());
             telemetry.update();
         }
     }
