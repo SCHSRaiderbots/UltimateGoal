@@ -87,14 +87,11 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 
 @TeleOp(name="Tracking", group ="Testing")
 public class Tracking extends OpMode {
+    /** The playing field may have several configurations: Full field, Red Alliance, or Blue Alliance */
+    public enum Field {FULL, RED, BLUE}
 
-    // IMPORTANT: If you are using a USB WebCam, you must select CAMERA_CHOICE = BACK; and PHONE_IS_PORTRAIT = false;
-    private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
-    private static final boolean PHONE_IS_PORTRAIT = false  ;
-
-    // Our license key
-    private static final String VUFORIA_KEY =
-            "AUnX7nP/////AAABmZjfOTd2skx4p/r+LBA29VQAFar5mbPnEfGtcl78mMIqK+EtsUOR33zwyiDCmj1oYMUx0P4eWZGi6EMhZgTM66/5llx5azKwGGxGmTJUGotbAekyZgxYR7SWDme6xMYGR68jZcR9rkvJxfB1ZKFytPXWeRpwzSAQJ0VACF/hdguUyfA6SSkF2dnc/iH76TkSV3hA4zz0v3wjHfQmmNBvrtgPklvfOTX2f+G5tBfBq75PEx52LaX+tOPTtBajR9MFwVT26kcqFz2GJCEBgjO3PX1St0xNJBqbbudKvZ+B/6xWuVhwHVqwOgy/RsuHLBFskh4n9Ec1xnuB9uCnQXrrliEtcR1TbnmIEYTX6FZtxF5H";
+    // Our remote field is RED
+    public Field field = Field.RED;
 
     // Since ImageTarget trackables use mm to specify their dimensions, we must use mm for all the physical dimension.
     // We will define some constants and conversions here
@@ -104,6 +101,14 @@ public class Tracking extends OpMode {
     // Constants for perimeter targets
     private static final float halfField = 72 * mmPerInch;
     private static final float quadField  = 36 * mmPerInch;
+
+    // IMPORTANT: If you are using a USB WebCam, you must select CAMERA_CHOICE = BACK; and PHONE_IS_PORTRAIT = false;
+    private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
+    private static final boolean PHONE_IS_PORTRAIT = false  ;
+
+    // Our license key
+    private static final String VUFORIA_KEY =
+            "AUnX7nP/////AAABmZjfOTd2skx4p/r+LBA29VQAFar5mbPnEfGtcl78mMIqK+EtsUOR33zwyiDCmj1oYMUx0P4eWZGi6EMhZgTM66/5llx5azKwGGxGmTJUGotbAekyZgxYR7SWDme6xMYGR68jZcR9rkvJxfB1ZKFytPXWeRpwzSAQJ0VACF/hdguUyfA6SSkF2dnc/iH76TkSV3hA4zz0v3wjHfQmmNBvrtgPklvfOTX2f+G5tBfBq75PEx52LaX+tOPTtBajR9MFwVT26kcqFz2GJCEBgjO3PX1St0xNJBqbbudKvZ+B/6xWuVhwHVqwOgy/RsuHLBFskh4n9Ec1xnuB9uCnQXrrliEtcR1TbnmIEYTX6FZtxF5H";
 
     // Class Members
     private OpenGLMatrix lastLocation = null;
@@ -161,7 +166,8 @@ public class Tracking extends OpMode {
         targetsUltimateGoal = this.vuforia.loadTrackablesFromAsset("UltimateGoal");
 
         // consider individual targets
-        // There are exactly 5 targets in UltimateGoal.xml. There is no UltimateGoal target (top of goal structure).
+        // There are exactly 5 targets in UltimateGoal.xml.
+        // There is no UltimateGoal target (top of goal structure).
         VuforiaTrackable blueTowerGoalTarget = targetsUltimateGoal.get(0);
         blueTowerGoalTarget.setName("Blue Tower Goal Target");
         VuforiaTrackable redTowerGoalTarget = targetsUltimateGoal.get(1);
@@ -173,6 +179,8 @@ public class Tracking extends OpMode {
         VuforiaTrackable frontWallTarget = targetsUltimateGoal.get(4);
         frontWallTarget.setName("Front Wall Target");
 
+        // make a list of all the trackables
+        // In a Remote field, one of the tower goals will not be there
         allTrackables.addAll(targetsUltimateGoal);
 
         /*
@@ -194,10 +202,10 @@ public class Tracking extends OpMode {
          */
 
         // Set the position of the perimeter targets with relation to origin (center of field)
+        // TODO: positions of the targets depend on field...
         redAllianceTarget.setLocation(OpenGLMatrix
                 .translation(0, -halfField, mmTargetHeight)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 180)));
-
         blueAllianceTarget.setLocation(OpenGLMatrix
                 .translation(0, halfField, mmTargetHeight)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 0)));
@@ -240,16 +248,17 @@ public class Tracking extends OpMode {
         }
 
         // Next, translate the camera lens to where it is on the robot.
+        // Camera position
         // In this example, it is centered (left to right), but forward of the middle of the robot, and above ground level.
-        final float CAMERA_FORWARD_DISPLACEMENT = 4.0f * mmPerInch;   // eg: Camera is 4 Inches in front of robot-center
-        final float CAMERA_VERTICAL_DISPLACEMENT = 8.0f * mmPerInch;   // eg: Camera is 8 Inches above ground
-        final float CAMERA_LEFT_DISPLACEMENT = 0;     // eg: Camera is ON the robot's center line
+        final float CAMERA_FORWARD_DISPLACEMENT = 0.0f * mmPerInch;   // eg: Camera is 4 Inches in front of robot-center
+        final float CAMERA_VERTICAL_DISPLACEMENT = 11.5f * mmPerInch;   // eg: Camera is 8 Inches above ground
+        final float CAMERA_LEFT_DISPLACEMENT = 0.0f * mmPerInch;     // eg: Camera is ON the robot's center line
 
         OpenGLMatrix robotFromCamera = OpenGLMatrix
                 .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, YZX, DEGREES, phoneYRotate, phoneZRotate, phoneXRotate));
 
-        /* Let all the trackable listeners know where the phone is. */
+        // Let all the trackable listeners know where the phone is.
         for (VuforiaTrackable trackable : allTrackables) {
             ((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(robotFromCamera, parameters.cameraDirection);
         }
@@ -271,7 +280,7 @@ public class Tracking extends OpMode {
 
     @Override
     public void init_loop() {
-        // should do tracking here...
+        // do tracking here...
         loop();
     }
 
@@ -290,8 +299,11 @@ public class Tracking extends OpMode {
         for (VuforiaTrackable trackable : allTrackables) {
             // is this target is visible?
             if (((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible()) {
-                telemetry.addData("Visible Target", trackable.getName());
+                // remember that we saw a target
                 targetVisible = true;
+
+                // report that we see a target
+                telemetry.addData("Visible Target", trackable.getName());
 
                 // getUpdatedRobotLocation() will return null if no new information is available since
                 // the last time that call was made, or if the trackable is not currently visible.
@@ -299,9 +311,14 @@ public class Tracking extends OpMode {
                 if (robotLocationTransform != null) {
                     lastLocation = robotLocationTransform;
                 }
+
+                // We only look for the first target and then quit
+                // What if two are targets are visible?
                 break;
             }
         }
+
+        // TODO: the engine is hanging; the UVC camera is shut down
 
         // Provide feedback as to where the robot is located (if we know).
         if (targetVisible) {
@@ -312,7 +329,9 @@ public class Tracking extends OpMode {
 
             // express the rotation of the robot in degrees.
             Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
-            telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
+            // TODO: rolls is showing as 90 degrees
+            telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f",
+                    rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
         } else {
             telemetry.addData("Visible Target", "none");
         }
