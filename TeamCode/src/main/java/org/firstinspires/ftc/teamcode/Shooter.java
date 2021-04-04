@@ -4,6 +4,8 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.MotorControlAlgorithm;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -34,7 +36,26 @@ public class Shooter extends OpMode {
             // set reverse direction
             dcmotorShooter.setDirection(DcMotor.Direction.REVERSE);
 
+            // assume max velocity of 90 rps gives 2^15 PWM
+            // changing this does not have much effect
+            double F = 32767.0 / (90.0 * 28.0);
+
+            // 10, 3 gives 6 seconds with ringing
+            // 50, 5 gives 3 seconds with overshoot
+            // 20, 2 gives 4 seconds with overshoot
+            // 50, 2 gives 6 seconds
+            // 50, 15 gives 4 seconds
+            PIDFCoefficients pidfRUE = new PIDFCoefficients(50.0, 5, 0, F, MotorControlAlgorithm.PIDF);
+            // shooter does not use R2P...
+            // PIDFCoefficients pidfR2P = new PIDFCoefficients(10, 0.05, 0, 0, MotorControlAlgorithm.PIDF);
+
+            // set the PIDF coefficients
+            dcmotorShooter.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfRUE);
+
             // describe the motor...
+            // Default PIDF:
+            //   PIDF(rue) 10, 3, 0, 0, Legacy
+            //   PIDF(r2p) 10, 0.05, 0, 0, Legacy
             LogDevice.dump("shooter", dcmotorShooter);
         }
 
@@ -48,7 +69,6 @@ public class Shooter extends OpMode {
             // command the servo to the current position
             servoShoot.setPosition(posShooter);
         }
-
     }
 
     @Override
@@ -107,6 +127,7 @@ public class Shooter extends OpMode {
 
                 // turn on the motor
                 dcmotorShooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                // set 60 rps
                 dcmotorShooter.setVelocity(60.0 * 28.0);
                 // dcmotorShooter.setPower(1.0);
                 // reads 84.0 rps when I expected 60.
@@ -139,7 +160,7 @@ public class Shooter extends OpMode {
             // TODO: these numbers do not make sense yet
             //   OK, starting to make sense; motor presumes divide by 20.
             // try revs per second
-            telemetry.addData("Shooter", "vel %f", 20.0 * dcmotorShooter.getVelocity(AngleUnit.DEGREES)/360.0);
+            telemetry.addData("Shooter (from angle)", "vel %f", 20.0 * dcmotorShooter.getVelocity(AngleUnit.DEGREES)/360.0);
             // use known ticks to get a value
             // expect velocity to be in ticks per second; dividing by 28 should be rotations per second
             // press x at 11.0 V, get 97 and 69.
