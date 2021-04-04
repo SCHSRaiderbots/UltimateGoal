@@ -29,12 +29,13 @@ public class Wobble extends OpMode {
         // find the wobble motor for the arm
         motorWobble = hardwareMap.get(DcMotorEx.class, "motorWobble");
         // configure the motor
-        PIDFCoefficients pidf = new PIDFCoefficients();
-        pidf.p = 10;
-        pidf.i = 0.0;
-        pidf.d = 0.0;
-        pidf.f = 0.0;
-        pidf.algorithm = MotorControlAlgorithm.PIDF;
+
+        // Set PIDF coefficients
+        // calculate feedforward value based on max RPM should develop 2^15 duty cycle
+        double F = 32767.0 / (2.0 * 288.0);
+        // use lower integrated error
+        PIDFCoefficients pidfRUE = new PIDFCoefficients(10.0, 1.0, 0.0, F, MotorControlAlgorithm.PIDF );
+        PIDFCoefficients pidfR2P = new PIDFCoefficients(10.0, 0.0, 0.0, 0.0, MotorControlAlgorithm.PIDF);
         // OK, I'm confused.
         // Default PIDF(rue) = 10, 3, 0, 0, LegacyPID
         //         PIDF(r2p) = ???
@@ -48,10 +49,10 @@ public class Wobble extends OpMode {
         // does have the power to lift. That suggests that R2P DOES USE the RUE coefficients.
         // The lift happens because the integrated error supplies enough power to move the arm.
         // Does that mean that RUE and R2P are not what I expect them to be?
-        pidf.i = 3.0;
-        motorWobble.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf);
-        pidf.i = 0.0;
-        motorWobble.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, pidf);
+        motorWobble.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfRUE);
+        motorWobble.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, pidfR2P);
+
+
         motorWobble.setDirection(DcMotorSimple.Direction.REVERSE);
         // use the motor as a servo
         // then change the mode
