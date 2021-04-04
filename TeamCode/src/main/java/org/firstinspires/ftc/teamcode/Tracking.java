@@ -101,6 +101,7 @@ public class Tracking extends OpMode {
     // Constants for perimeter targets
     private static final float halfField = 72 * mmPerInch;
     private static final float quadField  = 36 * mmPerInch;
+    private static final float shortField = 24 * mmPerInch;
 
     // IMPORTANT: If you are using a USB WebCam, you must select CAMERA_CHOICE = BACK; and PHONE_IS_PORTRAIT = false;
     private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
@@ -133,9 +134,7 @@ public class Tracking extends OpMode {
 
     @Override
     public void init() {
-        /*
-         * Retrieve the camera we are to use.
-         */
+        // Retrieve the camera we are to use.
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
 
         /*
@@ -143,19 +142,26 @@ public class Tracking extends OpMode {
          * We can pass Vuforia the handle to a camera preview resource (on the RC phone);
          * If no camera monitor is desired, use the parameter-less constructor instead (commented out below).
          */
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+        VuforiaLocalizer.Parameters parameters;
 
-        // VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+        if (false) {
+            // camera with monitor view
+            int cameraMonitorViewId = hardwareMap.appContext.getResources()
+                    .getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+            parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+        }
+        else {
+            // This method seems much more reliable!
+            // just the camera
+            parameters = new VuforiaLocalizer.Parameters();
+        }
 
+        // Set the parameters...
+        // license key
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
-
-        /*
-         * We also indicate which camera on the RC we wish to use.
-         */
+        // camera name
         parameters.cameraName = webcamName;
-
-        // Make sure extended tracking is disabled for this example.
+        // disable extended tracking
         parameters.useExtendedTracking = false;
 
         //  Instantiate the Vuforia engine
@@ -203,11 +209,15 @@ public class Tracking extends OpMode {
 
         // Set the position of the perimeter targets with relation to origin (center of field)
         // TODO: positions of the targets depend on field...
+        // 90 degree X rotation takes the image out of XY plane and into the YZ plane
+        //  0 degree Y rotation means the image is not tilted
+        //  consider blue alliance wall. When rotated about X, the image is skewered by the Y axis, so no rotation is needed.
+        // need the notion of a Java "receiver"
         redAllianceTarget.setLocation(OpenGLMatrix
-                .translation(0, -halfField, mmTargetHeight)
+                .translation(0, (field == Field.BLUE)? -shortField : -halfField, mmTargetHeight)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 180)));
         blueAllianceTarget.setLocation(OpenGLMatrix
-                .translation(0, halfField, mmTargetHeight)
+                .translation(0, (field == Field.RED)? shortField : halfField, mmTargetHeight)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 0)));
         frontWallTarget.setLocation(OpenGLMatrix
                 .translation(-halfField, 0, mmTargetHeight)
@@ -221,7 +231,6 @@ public class Tracking extends OpMode {
                 .translation(halfField, -quadField, mmTargetHeight)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -90)));
 
-        //
         // Create a transformation matrix describing where the phone is on the robot.
         //
         // NOTE !!!!  It's very important that you turn OFF your phone's Auto-Screen-Rotation option.
@@ -241,11 +250,20 @@ public class Tracking extends OpMode {
         } else {
             phoneYRotate = 90;
         }
+        // this does not change heading
+        // phoneYRotate = 0;
 
         // Rotate the phone vertical about the X axis if it's in portrait mode
         if (PHONE_IS_PORTRAIT) {
             phoneXRotate = 90;
         }
+        // will this remove the roll of 90?
+        // this does not change roll
+        // phoneXRotate = 0;
+
+        // try rotate Z
+        // has no effect
+        // phoneZRotate = -90;
 
         // Next, translate the camera lens to where it is on the robot.
         // Camera position
@@ -267,7 +285,13 @@ public class Tracking extends OpMode {
         // In this sample, we do not wait for PLAY to be pressed.  Target Tracking is started immediately when INIT is pressed.
         // This sequence is used to enable the new remote DS Camera Preview feature to be used with this sample.
         // CONSEQUENTLY do not put any driving commands in this loop.
+
+        // OK, when DS Camera Preview is enabled, the gamepads are disabled.
+        // Also, an opmode cannot be started during DS Camera Preview.
         // To restore the normal opmode structure, just un-comment the following line:
+
+        // TODO: Control hubs do not have a local camera view, so DS Camer Preview is needed.
+        // Make a linear opmode that shares a lot of this code.
 
         // waitForStart();
 
@@ -314,7 +338,7 @@ public class Tracking extends OpMode {
 
                 // We only look for the first target and then quit
                 // What if two are targets are visible?
-                break;
+                // break;
             }
         }
 
