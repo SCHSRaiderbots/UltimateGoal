@@ -103,6 +103,19 @@ public class Tracking extends OpMode {
     private static final float quadField  = 36 * mmPerInch;
     private static final float shortField = 24 * mmPerInch;
 
+    // TODO: Do I need to load the webcam calibration files?
+    // It may be that this database is sticky -- once found (eg, VisionTest opmode), it stays resident
+    // vid=0x32e4, pid=0x9230
+    // looking at logcat
+    //   claims webcam is not UVC (but others say it is)
+    //   found 640x480
+    //   supplied 320x240 (2:1)
+    //   supplied 1024x768 (8:5)
+    //   supplied 800x600 (5:4)
+    //   not found 1920x1080
+    //   not found 1280x720
+    //   chose 640x480 at 30 fps
+
     // IMPORTANT: If you are using a USB WebCam, you must select CAMERA_CHOICE = BACK; and PHONE_IS_PORTRAIT = false;
     private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
     private static final boolean PHONE_IS_PORTRAIT = false  ;
@@ -153,6 +166,7 @@ public class Tracking extends OpMode {
         else {
             // This method seems much more reliable!
             // just the camera
+            // I get a camera stream on the DS! But it does not update.
             parameters = new VuforiaLocalizer.Parameters();
         }
 
