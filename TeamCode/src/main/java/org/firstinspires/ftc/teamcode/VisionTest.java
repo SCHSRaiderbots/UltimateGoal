@@ -22,6 +22,8 @@ public class VisionTest extends OpMode {
     private static final String LABEL_FIRST_ELEMENT = "Quad";
     private static final String LABEL_SECOND_ELEMENT = "Single";
 
+    // TODO: Anisha and https://isscroberto.com/2018/10/05/android-remove-idea-folder-from-git/
+
     /*
      * IMPORTANT: You need to obtain your own license key to use Vuforia. The string below with which
      * 'parameters.vuforiaLicenseKey' is initialized is for illustration only, and will not function.
@@ -196,6 +198,9 @@ public class VisionTest extends OpMode {
             // TODO: how to set resolution?
             // I have no idea which resolution the camera has selected
             // TODO: set calibration
+            // downloaded 3D Zephyr Free.
+            // see also https://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
+            // see also https://en.wikipedia.org/wiki/Distortion_(optics)
             // TODO: choose the filename
             // there were zero files
             Log.d("Webcam 1", String.valueOf(parameters.webcamCalibrationFiles.length));
@@ -224,6 +229,7 @@ public class VisionTest extends OpMode {
         //  Instantiate the Vuforia engine
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
 
+        // TODO: Trackables ...
         // Loading trackables is not necessary for the TensorFlow Object Detection engine.
     }
 
@@ -231,6 +237,7 @@ public class VisionTest extends OpMode {
      * Initialize the TensorFlow Object Detection engine.
      */
     private void initTfod() {
+        // TODO: what implications for webcam?
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
                 "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
 
@@ -238,6 +245,7 @@ public class VisionTest extends OpMode {
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
 
         // set the confidence parameter
+        // TODO: try lower confidence for tfod?
         tfodParameters.minResultConfidence = 0.8f;
 
         // build a TensorFlow object detector
