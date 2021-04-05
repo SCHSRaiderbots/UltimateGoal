@@ -184,9 +184,12 @@ public class VisionTest extends OpMode {
         // .cameraDirection
         // .cameraName
         if (false) {
+            // I get a camera stream from the phone camera.
             // phone camera - I'm guessing it is the default
             parameters.cameraDirection = CameraDirection.BACK;
         } else {
+            // I get a camera stream from the webcam.
+            // TODO: The webcam is not reliable and keeps aborting transfers...
             // to configure a camera, go to configuration menu, select the configuration, and then click SCAN
             parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
             // should not need to set a direction
@@ -195,7 +198,7 @@ public class VisionTest extends OpMode {
             // TODO: set calibration
             // TODO: choose the filename
             // there were zero files
-            Log.d("webcamGLR", String.valueOf(parameters.webcamCalibrationFiles.length));
+            Log.d("Webcam 1", String.valueOf(parameters.webcamCalibrationFiles.length));
             // look with                                       "res/xml/teamwebcamcalibrations.xml"
             // was /storage/emulated/0/FIRST/webcamcalibrations/res/xml/teamwebcamcalibrations.xml (No such file or directory)
             // shortened to just teamwebcamcalibrations.xml, but that file was not found.
