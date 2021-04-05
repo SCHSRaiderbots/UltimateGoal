@@ -33,6 +33,9 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -52,6 +55,8 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
+import static org.firstinspires.ftc.teamcode.Motion.setRobot;
+import static org.firstinspires.ftc.teamcode.Motion.setRobot2019;
 
 /**
  * This 2020-2021 OpMode illustrates the basics of using the Vuforia localizer to determine
@@ -87,6 +92,14 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 
 @TeleOp(name="Tracking", group ="Testing")
 public class Tracking extends OpMode {
+
+    // drive motors
+    private DcMotorEx dcmotorLeft = null;
+    private DcMotorEx dcmotorRight = null;
+
+    // drive mode: true is POVMode, false is TankMode
+    private boolean boolPOVDrive = true;
+
     /** The playing field may have several configurations: Full field, Red Alliance, or Blue Alliance */
     public enum Field {FULL, RED, BLUE}
 
@@ -147,6 +160,22 @@ public class Tracking extends OpMode {
 
     @Override
     public void init() {
+        // drive
+        dcmotorLeft = hardwareMap.get(DcMotorEx.class, "leftMotor");
+        dcmotorRight = hardwareMap.get(DcMotorEx.class, "rightMotor");
+
+        // Most robots need the motor on one side to be reversed to drive forward
+        // Reverse the motor that runs backwards when connected directly to the battery
+        dcmotorLeft.setDirection(DcMotor.Direction.REVERSE);
+        dcmotorRight.setDirection(DcMotor.Direction.FORWARD);
+
+        // After the drive motors are configured, inform the Motion class
+        // odometry
+        setRobot(dcmotorLeft, dcmotorRight);
+        // use an old robot
+        // TODO: use a phantom switch to determine the actual robot
+        setRobot2019();
+
         // Retrieve the camera we are to use.
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
 
@@ -318,18 +347,52 @@ public class Tracking extends OpMode {
 
     @Override
     public void init_loop() {
+        Motion.updateRobotPose();
+
+        if (gamepad1.y) {
+            Motion.setPoseInches(0.0, 0.0, 0.0);
+        }
+
         // do tracking here...
+        // TODO: unwanted side-effect: we have drive.
         loop();
     }
 
     @Override
     public void start() {
+        Motion.updateRobotPose();
+
         // not much to do
         loop();
     }
 
     @Override
     public void loop() {
+        Motion.updateRobotPose();
+
+        // drivef
+        double powerLeft;
+        double powerRight;
+
+        // Choose to drive using either Tank Mode, or POV Mode
+        if (boolPOVDrive) {
+            // POV Mode uses left stick to go forward, and right stick to turn.
+            // - This uses basic math to combine motions and is easier to drive straight.
+            double drive = -gamepad1.left_stick_y;
+            double turn = gamepad1.right_stick_x;
+            powerLeft = Range.clip(drive + turn, -1.0, 1.0);
+            powerRight = Range.clip(drive - turn, -1.0, 1.0);
+        }
+        else {
+            // Tank Mode uses one stick to control each wheel.
+            // - This requires no math, but it is hard to drive forward slowly and keep straight.
+            powerLeft  = -gamepad1.left_stick_y ;
+            powerRight = -gamepad1.right_stick_y ;
+        }
+        // Send calculated power to wheels
+        dcmotorLeft.setPower(powerLeft);
+        dcmotorRight.setPower(powerRight);
+
         // assume nothing is visible
         targetVisible = false;
 
@@ -373,6 +436,8 @@ public class Tracking extends OpMode {
         } else {
             telemetry.addData("Visible Target", "none");
         }
+
+        telemetry.addData("Robot Pose", "x: %f, y: %f", Motion.xPoseInches, Motion.yPoseInches);
     }
 
     public void stop() {

@@ -4,6 +4,9 @@ import android.util.Log;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -14,8 +17,17 @@ import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 
 import java.util.List;
 
+import static org.firstinspires.ftc.teamcode.Motion.setRobot;
+import static org.firstinspires.ftc.teamcode.Motion.setRobot2019;
+
 @Autonomous(name="Vision Test", group="Auto Test")
 public class VisionTest extends OpMode {
+    // drive motors
+    private DcMotorEx dcmotorLeft = null;
+    private DcMotorEx dcmotorRight = null;
+
+
+
     // the assets directory has the .tflite for Ultimate Goal
     // it does not have a .tflite for last year's SkyStone game
     private static final String TFOD_MODEL_ASSET = "UltimateGoal.tflite";
@@ -52,6 +64,25 @@ public class VisionTest extends OpMode {
 
     @Override
     public void init() {
+        // initialize the drive
+        // Initialize the hardware variables. Note that the strings used here as parameters
+        // to 'get' must correspond to the names assigned during the robot configuration
+        // step (using the FTC Robot Controller app on the phone).
+        dcmotorLeft = hardwareMap.get(DcMotorEx.class, "leftMotor");
+        dcmotorRight = hardwareMap.get(DcMotorEx.class, "rightMotor");
+
+        // Most robots need the motor on one side to be reversed to drive forward
+        // Reverse the motor that runs backwards when connected directly to the battery
+        dcmotorLeft.setDirection(DcMotor.Direction.REVERSE);
+        dcmotorRight.setDirection(DcMotor.Direction.FORWARD);
+
+        // After the drive motors are configured, inform the Motion class
+        // odometry
+        setRobot(dcmotorLeft, dcmotorRight);
+        // use an old robot
+        // TODO: use a phantom switch to determine the actual robot
+        setRobot2019();
+
         // initialize the vision system
 
         // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
@@ -89,6 +120,9 @@ public class VisionTest extends OpMode {
 
     @Override
     public void init_loop() {
+        // drive
+        Motion.updateRobotPose();
+
         // during init, look for rings
 
         // do we have an object detector?
@@ -127,23 +161,24 @@ public class VisionTest extends OpMode {
                 Log.d("# Object Detected", "size = " + updatedRecognitions.size());
 
                 // step through the list of recognitions and display boundary info.
-                int i = 0;
                 for (Recognition recognition : updatedRecognitions) {
-                    telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
+                    telemetry.addData("tfod", recognition.getLabel());
+                    telemetry.addData("confidence", recognition.getConfidence());
                     telemetry.addData("  left, top", "%.03f , %.03f",
                             recognition.getLeft(), recognition.getTop());
                     telemetry.addData("  right, bottom", "%.03f , %.03f",
                             recognition.getRight(), recognition.getBottom());
-
-                    i = i + 1;
                 }
-                telemetry.update();
+                // telemetry.update();
             }
         }
     }
 
     @Override
     public void start() {
+        // drive
+        Motion.updateRobotPose();
+
         // assume we are done with vision
 
         // I may never hit Play. Turning off at stop() should always work.
@@ -157,7 +192,32 @@ public class VisionTest extends OpMode {
 
     @Override
     public void loop() {
-        //
+        // drive
+        Motion.updateRobotPose();
+
+        double powerLeft;
+        double powerRight;
+        boolean boolPOVDrive = true;
+
+        // Choose to drive using either Tank Mode, or POV Mode
+        if (boolPOVDrive) {
+            // POV Mode uses left stick to go forward, and right stick to turn.
+            // - This uses basic math to combine motions and is easier to drive straight.
+            double drive = -gamepad1.left_stick_y;
+            double turn = gamepad1.right_stick_x;
+            powerLeft = Range.clip(drive + turn, -1.0, 1.0);
+            powerRight = Range.clip(drive - turn, -1.0, 1.0);
+        }
+        else {
+            // Tank Mode uses one stick to control each wheel.
+            // - This requires no math, but it is hard to drive forward slowly and keep straight.
+            powerLeft  = -gamepad1.left_stick_y ;
+            powerRight = -gamepad1.right_stick_y ;
+        }
+
+        // Send calculated power to wheels
+        dcmotorLeft.setPower(powerLeft);
+        dcmotorRight.setPower(powerRight);
     }
 
     @Override

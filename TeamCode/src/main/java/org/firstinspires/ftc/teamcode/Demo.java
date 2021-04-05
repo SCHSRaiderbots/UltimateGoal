@@ -183,7 +183,8 @@ public class Demo extends OpMode
      */
     @Override
     public void init_loop() {
-        // We could updateRobotPose() here
+        // Update the pose
+        Motion.updateRobotPose();
 
         // look at the imu
         if (imu.isGyroCalibrated()) {
@@ -246,6 +247,7 @@ public class Demo extends OpMode
      */
     @Override
     public void start() {
+        Motion.updateRobotPose();
         runtime.reset();
     }
 
@@ -288,6 +290,7 @@ public class Demo extends OpMode
         dcmotorRight.setPower(powerRight);
 
         // move the flails
+        // TODO: assign motor to flails. Core Hex is not working; will try an HD
         dcmotorFlail.setPower(gamepad1.right_trigger);
 
         // Show the elapsed game time and wheel power.
