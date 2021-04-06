@@ -25,8 +25,7 @@ public class VisionTest extends OpMode {
     // drive motors
     private DcMotorEx dcmotorLeft = null;
     private DcMotorEx dcmotorRight = null;
-
-
+    private boolean boolPOVDrive = true;
 
     // the assets directory has the .tflite for Ultimate Goal
     // it does not have a .tflite for last year's SkyStone game
@@ -197,7 +196,6 @@ public class VisionTest extends OpMode {
 
         double powerLeft;
         double powerRight;
-        boolean boolPOVDrive = true;
 
         // Choose to drive using either Tank Mode, or POV Mode
         if (boolPOVDrive) {
