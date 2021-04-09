@@ -35,6 +35,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -62,6 +63,7 @@ public class HelloShooter extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotorEx shooterMotor1 = null;
     private DcMotorEx shooterMotor2 = null;
+    private Servo shooterServo = null;
 
     @Override
     public void runOpMode() {
@@ -73,6 +75,8 @@ public class HelloShooter extends LinearOpMode {
         // step (using the FTC Robot Controller app on the phone).
         shooterMotor1 = hardwareMap.get(DcMotorEx.class, "shooterMotor1");
         shooterMotor2 = hardwareMap.get(DcMotorEx.class, "shooterMotor2");
+
+        shooterServo = hardwareMap.get(Servo.class, "shooterServo");
 
         // Needs one side to be reversed and one side to be forward so that ring shoots out in correct direction
         // Wheels are on either side of ring, so reverse one motor to run backwards to allow ring to launch forward
@@ -105,7 +109,15 @@ public class HelloShooter extends LinearOpMode {
             if (gamepad2.b) {
                 shooterMotor1.setVelocity(HALF_BLAST);
                 shooterMotor2.setVelocity(HALF_BLAST);
-            }            
+            }
+
+            shooterServo.setDirection(Servo.Direction.FORWARD);
+            //open and close grabber servo with x and y buttons on gamepad2
+            if (gamepad2.x) {
+                shooterServo.setPosition(0);
+            } else if (gamepad2.y) {
+                shooterServo.setPosition(0.2);
+            }
 
             // Show the elapsed game time and shooter motor velocity (input and actual).
             telemetry.addData("Status", "Run Time: " + runtime.toString());
