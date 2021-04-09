@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.MotorControlAlgorithm;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -28,18 +29,40 @@ public class Wobble extends OpMode {
         // find the wobble motor for the arm
         motorWobble = hardwareMap.get(DcMotorEx.class, "motorWobble");
         // configure the motor
-        PIDFCoefficients pidf = new PIDFCoefficients();
-        pidf.p = 10;
-        pidf.i = 0.0;
-        pidf.d = 0.0;
-        pidf.f = 0.0;
-        motorWobble.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, pidf);
-        motorWobble.setDirection(DcMotorSimple.Direction.FORWARD);
+
+        // Set PIDF coefficients
+        // calculate feedforward value based on max RPM should develop 2^15 duty cycle
+        double F = 32767.0 / (2.0 * 288.0);
+        // use lower integrated error
+        PIDFCoefficients pidfRUE = new PIDFCoefficients(10.0, 1.0, 0.0, F, MotorControlAlgorithm.PIDF );
+        PIDFCoefficients pidfR2P = new PIDFCoefficients(10.0, 0.0, 0.0, 0.0, MotorControlAlgorithm.PIDF);
+        // OK, I'm confused.
+        // Default PIDF(rue) = 10, 3, 0, 0, LegacyPID
+        //         PIDF(r2p) = ???
+        // If I set
+        //    PIDF(rue) = 10, 0, 0, 0, PIDF
+        //    PIDF(r2p) = 10, 0, 0, 0, PIDF
+        // then there is not enough power sent to the motor to lift it.
+        // However
+        //    PIDF(rue) = 10, 3, 0, 0, LegacyPID (the default)
+        //    PIDF(r2p) = 10, 0, 0, 0, PIDF
+        // does have the power to lift. That suggests that R2P DOES USE the RUE coefficients.
+        // The lift happens because the integrated error supplies enough power to move the arm.
+        // Does that mean that RUE and R2P are not what I expect them to be?
+        motorWobble.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfRUE);
+        motorWobble.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, pidfR2P);
+
+
+        motorWobble.setDirection(DcMotorSimple.Direction.REVERSE);
         // use the motor as a servo
+        // then change the mode
+        motorWobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         // first set the target position
         motorWobble.setTargetPosition(0);
-        // then change the mode
+        // then set r2p mode
         motorWobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        // try RUE -- No, this just runs the motor continuously -- even when RUE.algorithm is PIDF
+        // motorWobble.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // set the power (otherwise the motor will not move)
         motorWobble.setPower(1.0);
@@ -67,8 +90,8 @@ public class Wobble extends OpMode {
 
     @Override
     public void loop() {
-        // use the right trigger to move the arm 1/2 turn
-        int ticksTarget = (int)(gamepad1.right_trigger * 288 * 0.5);
+        // use the right trigger to move the arm 1/4 turn
+        int ticksTarget = (int)(gamepad1.right_trigger * 288);
         motorWobble.setTargetPosition(ticksTarget);
         telemetry.addData("Wobble", "target position = %d", ticksTarget);
         telemetry.addData("Wobble", "actual position = %d", motorWobble.getCurrentPosition());

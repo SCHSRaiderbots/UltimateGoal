@@ -34,6 +34,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -75,6 +76,8 @@ public class Demo extends OpMode
 
     // drive mode: true is POVMode, false is TankMode
     private boolean boolPOVDrive = true;
+
+    private DcMotorEx dcmotorFlail = null;
 
     // imu / gyro
     // in previous years, the gyro was unstable: it would cause some inits to hang
@@ -133,8 +136,16 @@ public class Demo extends OpMode
         // odometry
         setRobot(dcmotorLeft, dcmotorRight);
         // use an old robot
-        // TODO: use a phontom switch to determine the actual robot
+        // TODO: use a phantom switch to determine the actual robot
         setRobot2019();
+
+
+        // flail motor hack
+        // TODO: hack!
+        dcmotorFlail = hardwareMap.get(DcMotorEx.class, "motorWobble");
+        dcmotorFlail.setDirection(DcMotorSimple.Direction.REVERSE);
+
+
         // TODO: this is a gyro parameter for the 2019 robot
         // the AxesOrder for the 2019 robot.
         axesorder = AxesOrder.ZXY;
@@ -172,7 +183,8 @@ public class Demo extends OpMode
      */
     @Override
     public void init_loop() {
-        // We could updateRobotPose() here
+        // Update the pose
+        Motion.updateRobotPose();
 
         // look at the imu
         if (imu.isGyroCalibrated()) {
@@ -235,6 +247,7 @@ public class Demo extends OpMode
      */
     @Override
     public void start() {
+        Motion.updateRobotPose();
         runtime.reset();
     }
 
@@ -275,6 +288,10 @@ public class Demo extends OpMode
         // Send calculated power to wheels
         dcmotorLeft.setPower(powerLeft);
         dcmotorRight.setPower(powerRight);
+
+        // move the flails
+        // TODO: assign motor to flails. Core Hex is not working; will try an HD
+        dcmotorFlail.setPower(gamepad1.right_trigger);
 
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
