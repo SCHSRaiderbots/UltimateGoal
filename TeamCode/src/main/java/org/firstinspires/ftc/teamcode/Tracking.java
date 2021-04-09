@@ -53,6 +53,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
+import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.FRONT;
 import static org.firstinspires.ftc.teamcode.Motion.setRobot;
 import static org.firstinspires.ftc.teamcode.Motion.setRobot2019;
 
@@ -200,10 +201,16 @@ public class Tracking extends OpMode {
         // Set the parameters...
         // license key
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
-        // camera name
+        // camera name -- comment this out, and you use the phone camera
+        // Using the phone camera, the headings are correct and the robot center is identified
         parameters.cameraName = webcamName;
         // disable extended tracking
         parameters.useExtendedTracking = false;
+
+        // TODO: hack direction explicitly
+        // does not help.
+        // front or back does not change anything.
+        parameters.cameraDirection = BACK;
 
         //  Instantiate the Vuforia engine
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
@@ -286,6 +293,7 @@ public class Tracking extends OpMode {
         // The two examples below assume that the camera is facing forward out the front of the robot.
 
         // We need to rotate the camera around it's long axis to bring the correct camera forward.
+        // TODO: CAMERA_CHOICE dependence
         if (CAMERA_CHOICE == BACK) {
             phoneYRotate = -90;
         } else {
@@ -300,7 +308,7 @@ public class Tracking extends OpMode {
         }
         // will this remove the roll of 90?
         // this does not change roll
-        // phoneXRotate = 0;
+        // phoneXRotate = 90;
 
         // try rotate Z
         // has no effect
@@ -309,15 +317,16 @@ public class Tracking extends OpMode {
         // Next, translate the camera lens to where it is on the robot.
         // Camera position
         // In this example, it is centered (left to right), but forward of the middle of the robot, and above ground level.
-        final float CAMERA_FORWARD_DISPLACEMENT = 0.0f * mmPerInch;   // eg: Camera is 4 Inches in front of robot-center
+        final float CAMERA_FORWARD_DISPLACEMENT = 7.0f * mmPerInch;   // eg: Camera is 4 Inches in front of robot-center
         final float CAMERA_VERTICAL_DISPLACEMENT = 11.5f * mmPerInch;   // eg: Camera is 8 Inches above ground
-        final float CAMERA_LEFT_DISPLACEMENT = 0.0f * mmPerInch;     // eg: Camera is ON the robot's center line
+        final float CAMERA_LEFT_DISPLACEMENT = -4.0f * mmPerInch;     // eg: Camera is ON the robot's center line
 
         OpenGLMatrix robotFromCamera = OpenGLMatrix
                 .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, YZX, DEGREES, phoneYRotate, phoneZRotate, phoneXRotate));
 
         // Let all the trackable listeners know where the phone is.
+        // TODO: parameters.cameraDirection vs VuforiaLocalizer.CameraDirection
         for (VuforiaTrackable trackable : allTrackables) {
             ((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(robotFromCamera, parameters.cameraDirection);
         }
@@ -331,7 +340,7 @@ public class Tracking extends OpMode {
         // Also, an opmode cannot be started during DS Camera Preview.
         // To restore the normal opmode structure, just un-comment the following line:
 
-        // TODO: Control hubs do not have a local camera view, so DS Camer Preview is needed.
+        // TODO: Control hubs do not have a screen, so they do not have a camera view, so DS Camera Preview is needed.
         // Make a linear opmode that shares a lot of this code.
 
         // waitForStart();
@@ -418,6 +427,10 @@ public class Tracking extends OpMode {
         }
 
         // TODO: the engine is hanging; the UVC camera is shut down
+        // check if this happens for the logitech caqmera
+
+        // report odometry position
+        telemetry.addData("Robot Pose", "x: %f, y: %f", Motion.xPoseInches, Motion.yPoseInches);
 
         // Provide feedback as to where the robot is located (if we know).
         if (targetVisible) {
@@ -425,6 +438,11 @@ public class Tracking extends OpMode {
             VectorF translation = lastLocation.getTranslation();
             telemetry.addData("Pos (in)", "{X, Y, Z} = %.1f, %.1f, %.1f",
                         translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, translation.get(2) / mmPerInch);
+
+            // report the difference in (x,y) position
+            telemetry.addData("Deltas", "dX %.1f, dY %.1f",
+                    Motion.xPoseInches - translation.get(0)/mmPerInch,
+                    Motion.yPoseInches - translation.get(1)/mmPerInch);
 
             // express the rotation of the robot in degrees.
             Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
@@ -434,8 +452,6 @@ public class Tracking extends OpMode {
         } else {
             telemetry.addData("Visible Target", "none");
         }
-
-        telemetry.addData("Robot Pose", "x: %f, y: %f", Motion.xPoseInches, Motion.yPoseInches);
     }
 
     public void stop() {

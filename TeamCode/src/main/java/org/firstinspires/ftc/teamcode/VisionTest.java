@@ -27,6 +27,11 @@ public class VisionTest extends OpMode {
     private DcMotorEx dcmotorRight = null;
     private boolean boolPOVDrive = true;
 
+    // enable driving
+    private static final boolean bDrive = false;
+    // use phone camera instead of webcam
+    private static final boolean bPhone = false;
+
     // the assets directory has the .tflite for Ultimate Goal
     // it does not have a .tflite for last year's SkyStone game
     private static final String TFOD_MODEL_ASSET = "UltimateGoal.tflite";
@@ -63,24 +68,27 @@ public class VisionTest extends OpMode {
 
     @Override
     public void init() {
-        // initialize the drive
-        // Initialize the hardware variables. Note that the strings used here as parameters
-        // to 'get' must correspond to the names assigned during the robot configuration
-        // step (using the FTC Robot Controller app on the phone).
-        dcmotorLeft = hardwareMap.get(DcMotorEx.class, "leftMotor");
-        dcmotorRight = hardwareMap.get(DcMotorEx.class, "rightMotor");
 
-        // Most robots need the motor on one side to be reversed to drive forward
-        // Reverse the motor that runs backwards when connected directly to the battery
-        dcmotorLeft.setDirection(DcMotor.Direction.REVERSE);
-        dcmotorRight.setDirection(DcMotor.Direction.FORWARD);
+        if (bDrive) {
+            // initialize the drive
+            // Initialize the hardware variables. Note that the strings used here as parameters
+            // to 'get' must correspond to the names assigned during the robot configuration
+            // step (using the FTC Robot Controller app on the phone).
+            dcmotorLeft = hardwareMap.get(DcMotorEx.class, "leftMotor");
+            dcmotorRight = hardwareMap.get(DcMotorEx.class, "rightMotor");
 
-        // After the drive motors are configured, inform the Motion class
-        // odometry
-        setRobot(dcmotorLeft, dcmotorRight);
-        // use an old robot
-        // TODO: use a phantom switch to determine the actual robot
-        setRobot2019();
+            // Most robots need the motor on one side to be reversed to drive forward
+            // Reverse the motor that runs backwards when connected directly to the battery
+            dcmotorLeft.setDirection(DcMotor.Direction.REVERSE);
+            dcmotorRight.setDirection(DcMotor.Direction.FORWARD);
+
+            // After the drive motors are configured, inform the Motion class
+            // odometry
+            setRobot(dcmotorLeft, dcmotorRight);
+            // use an old robot
+            // TODO: use a phantom switch to determine the actual robot
+            setRobot2019();
+        }
 
         // initialize the vision system
 
@@ -111,16 +119,33 @@ public class VisionTest extends OpMode {
             // should be set to the value of the images used to create the TensorFlow Object Detection model
             // (typically 1.78 or 16/9).
 
+            // TODO: consider tfod.setZoom(). Is a 4/3 (640x480) webcam messing up accuracy?
             // Uncomment the following line if you want to adjust the magnification and/or the aspect ratio of the input images.
-            //tfod.setZoom(2.5, 1.78);
+            // tfod.setZoom(2.5, 1.78);
+
+            // Aspect ratio does have an effect.
+            // with a phone, I can get 0.828 from about 5 feet away. At home, I got a .89
+            // with a webcam at home, got 0.96!
+            tfod.setZoom(2.0, 4.0/3.0);
+            // with a phone, I can get 0.89 from about 5 feet away.
+            // at home with webcam, got a .98 quad and .93 single
+            // but sometimes it sees a quad as a single
+            // tfod.setZoom(2.0, 1.78);
+
+            // try with scale 1.0
+            // at home with webcam, got 0.828 for a quad
+            //          single not detected
+            // tfod.setZoom(1.0, 4.0/3.0);
         }
 
     }
 
     @Override
     public void init_loop() {
-        // drive
-        Motion.updateRobotPose();
+        if (bDrive) {
+            // drive
+            Motion.updateRobotPose();
+        }
 
         // during init, look for rings
 
@@ -175,8 +200,10 @@ public class VisionTest extends OpMode {
 
     @Override
     public void start() {
-        // drive
-        Motion.updateRobotPose();
+        if (bDrive) {
+            // drive
+            Motion.updateRobotPose();
+        }
 
         // assume we are done with vision
 
@@ -191,31 +218,33 @@ public class VisionTest extends OpMode {
 
     @Override
     public void loop() {
-        // drive
-        Motion.updateRobotPose();
+        if (bDrive) {
+            // drive
+            Motion.updateRobotPose();
 
-        double powerLeft;
-        double powerRight;
+            double powerLeft;
+            double powerRight;
 
-        // Choose to drive using either Tank Mode, or POV Mode
-        if (boolPOVDrive) {
-            // POV Mode uses left stick to go forward, and right stick to turn.
-            // - This uses basic math to combine motions and is easier to drive straight.
-            double drive = -gamepad1.left_stick_y;
-            double turn = gamepad1.right_stick_x;
-            powerLeft = Range.clip(drive + turn, -1.0, 1.0);
-            powerRight = Range.clip(drive - turn, -1.0, 1.0);
+            // Choose to drive using either Tank Mode, or POV Mode
+            if (boolPOVDrive) {
+                // POV Mode uses left stick to go forward, and right stick to turn.
+                // - This uses basic math to combine motions and is easier to drive straight.
+                double drive = -gamepad1.left_stick_y;
+                double turn = gamepad1.right_stick_x;
+                powerLeft = Range.clip(drive + turn, -1.0, 1.0);
+                powerRight = Range.clip(drive - turn, -1.0, 1.0);
+            } else {
+                // Tank Mode uses one stick to control each wheel.
+                // - This requires no math, but it is hard to drive forward slowly and keep straight.
+                powerLeft = -gamepad1.left_stick_y;
+                powerRight = -gamepad1.right_stick_y;
+            }
+
+            // Send calculated power to wheels
+            dcmotorLeft.setPower(powerLeft);
+            dcmotorRight.setPower(powerRight);
+
         }
-        else {
-            // Tank Mode uses one stick to control each wheel.
-            // - This requires no math, but it is hard to drive forward slowly and keep straight.
-            powerLeft  = -gamepad1.left_stick_y ;
-            powerRight = -gamepad1.right_stick_y ;
-        }
-
-        // Send calculated power to wheels
-        dcmotorLeft.setPower(powerLeft);
-        dcmotorRight.setPower(powerRight);
     }
 
     @Override
@@ -243,7 +272,7 @@ public class VisionTest extends OpMode {
         // .camera takes precedence
         // .cameraDirection
         // .cameraName
-        if (false) {
+        if (bPhone) {
             // I get a camera stream from the phone camera.
             // phone camera - I'm guessing it is the default
             parameters.cameraDirection = CameraDirection.BACK;
@@ -303,6 +332,8 @@ public class VisionTest extends OpMode {
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
 
         // set the confidence parameter
+        // initial was 0.8
+        // the value 0.6 is too low. Quad is identified as a single
         // TODO: try lower confidence for tfod?
         tfodParameters.minResultConfidence = 0.8f;
 
@@ -311,6 +342,8 @@ public class VisionTest extends OpMode {
 
         // load the objects to detect from the assets directory
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_FIRST_ELEMENT, LABEL_SECOND_ELEMENT);
+
+        // tfod.setClippingMargins(80, 200, 250, 450);
     }
 
 }
