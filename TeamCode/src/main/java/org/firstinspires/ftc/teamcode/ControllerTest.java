@@ -46,8 +46,8 @@ public class ControllerTest extends LinearOpMode {
     private DcMotorEx shooterMotor2 = null;
 
     static final double MAX_POWER = 1.0;
-    static final double posShooterRest = 0.0;
-    static final double posShooterFire = 0.2;
+    static final double POS_REST = 0.0;
+    static final double POS_FIRE = 0.2;
     double BLAST_SPEED = 2000;
     double HALF_BLAST = 1000;
 
@@ -73,7 +73,7 @@ public class ControllerTest extends LinearOpMode {
         shooterServo = hardwareMap.get(Servo.class, "shooterServo");
         armGripper = hardwareMap.get(Servo.class, "armGripper");
 
-        shooterServo.setPosition(posShooterRest);
+        shooterServo.setPosition(POS_REST);
 
         // Needs one side to be reversed and one side to be forward so that ring shoots out in correct direction
         // Wheels are on either side of ring, so reverse one motor to run backwards to allow ring to launch forward
@@ -147,22 +147,31 @@ public class ControllerTest extends LinearOpMode {
             }
 
             if(gamepad2.a){
-                shooterServo.setPosition(posShooterRest);
+                shooterServo.setPosition(POS_REST);
             }
 
             else if(gamepad2.b){
-                shooterServo.setPosition(posShooterFire);
+                shooterServo.setPosition(POS_FIRE);
             }
+
 
             if (gamepad2.right_bumper) {
                 shooterMotor1.setVelocity(BLAST_SPEED);
                 shooterMotor2.setVelocity(BLAST_SPEED);
             }
 
+
             if (gamepad2.left_bumper) {
                 shooterMotor1.setVelocity(HALF_BLAST);
                 shooterMotor2.setVelocity(HALF_BLAST);
             }
+
+
+            double speed = (int)(gamepad2.right_stick_y * 2000);
+            speed = Range.clip(speed,-2000,2000);
+            shooterMotor1.setVelocity(speed);
+            shooterMotor2.setVelocity(speed);
+
 
 
 
