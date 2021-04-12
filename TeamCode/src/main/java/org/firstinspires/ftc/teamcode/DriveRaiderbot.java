@@ -64,11 +64,12 @@ public class DriveRaiderbot extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
-    //private DcMotorEx shooterMotor1 = null;
-    //private DcMotorEx shooterMotor2 = null;
+    private DcMotorEx shooterMotor1 = null;
+    private DcMotorEx shooterMotor2 = null;
 
     private DcMotorEx leftDrive = null;
     private DcMotorEx rightDrive = null;
+    private DcMotorEx motorIntake = null;
 
     private Servo grabberServo = null;
     private DcMotorEx grabberMotor = null;
@@ -81,24 +82,26 @@ public class DriveRaiderbot extends LinearOpMode {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        //shooterMotor1 = hardwareMap.get(DcMotorEx.class, "shooterMotor1");
-        //shooterMotor2 = hardwareMap.get(DcMotorEx.class, "shooterMotor2");
+        shooterMotor1 = hardwareMap.get(DcMotorEx.class, "shooterMotor1");
+        shooterMotor2 = hardwareMap.get(DcMotorEx.class, "shooterMotor2");
 
         leftDrive  = hardwareMap.get(DcMotorEx.class, "leftMotor");
         rightDrive = hardwareMap.get(DcMotorEx.class, "rightMotor");
+        motorIntake = hardwareMap.get(DcMotorEx.class, "intakeMotor");
 
         grabberServo = hardwareMap.get(Servo.class, "grabberServo");
         grabberMotor = hardwareMap.get(DcMotorEx.class, "grabberMotor");
 
         // Needs one side to be reversed and one side to be forward so that ring shoots out in correct direction
         // Wheels are on either side of ring, so reverse one motor to run backwards to allow ring to launch forward
-        //shooterMotor1.setDirection(DcMotor.Direction.FORWARD);
-        //shooterMotor2.setDirection(DcMotor.Direction.REVERSE);
+        shooterMotor1.setDirection(DcMotor.Direction.FORWARD);
+        shooterMotor2.setDirection(DcMotor.Direction.REVERSE);
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
         leftDrive.setDirection(DcMotor.Direction.REVERSE);
         rightDrive.setDirection(DcMotor.Direction.FORWARD);
+        motorIntake.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -131,12 +134,13 @@ public class DriveRaiderbot extends LinearOpMode {
             // rightPower = -gamepad1.right_stick_y ;
 
             // Send calculated power to wheels
-            //shooterMotor1.setVelocity(velocity, AngleUnit.RADIANS);
-            //shooterMotor2.setVelocity(velocity, AngleUnit.RADIANS);
+            shooterMotor1.setVelocity(velocity, AngleUnit.RADIANS);
+            shooterMotor2.setVelocity(velocity, AngleUnit.RADIANS);
 
             leftDrive.setPower(leftPower);
             rightDrive.setPower(rightPower);
 
+            motorIntake.setPower(gamepad1.right_trigger);
 
             //open and close grabber servo with x and y buttons on gamepad2
             if (gamepad2.x) {
@@ -158,8 +162,8 @@ public class DriveRaiderbot extends LinearOpMode {
                     holdPosition = grabberMotor.getCurrentPosition();
                     timesChecked++;
                 }
-                grabberMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 grabberMotor.setTargetPosition(holdPosition);
+                grabberMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 grabberMotor.setPower(0.4); //random value because powerArm is 0
             } else {
                 grabberMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
