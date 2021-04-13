@@ -15,16 +15,27 @@ import static org.firstinspires.ftc.teamcode.SCHSConstants.*;
 public class SCHSController extends OpMode {
 
     private SCHSDrive rileyChassis = null;
+    private SCHSDetection rileyEnv = null;
     private boolean isInitialized = false;
-    //private SCHSDetection rileyEnv = null;
     private double leftDist;
     private double rightDist;
     private boolean isArcTurn;
+    private int numRings;
 
     private enum State {
         STATE_INITIAL,
+        STATE_START_SHOOTERS,
+        STATE_SHOOT_RINGS,
+        STATE_SHOOT_OFF,
+        STATE_SCAN_RINGS,
+        STATE_GO_TO_TARGET,
+        STATE_LOWER_WOBBLE_ARM,
+        STATE_RELEASE_WOBBLE,
+        STATE_GO_TO_LAUNCH,
+
         STATE_TEST_1,
         STATE_TEST_2,
+
         STATE_STOP
     }
 
@@ -42,8 +53,8 @@ public class SCHSController extends OpMode {
         rileyChassis = new SCHSDrive();
         rileyChassis.initialize(hardwareMap);
 
-        //rileyEnv = new SCHSDetection();
-        //rileyEnv.initialize(hardwareMap);
+        rileyEnv = new SCHSDetection();
+        rileyEnv.initialize(hardwareMap);
 
         //moved resetting encoders to init
         rileyChassis.resetEncoders();
@@ -55,6 +66,10 @@ public class SCHSController extends OpMode {
         msStuckDetectInitLoop = 20000;
 
         //detect stack of rings here
+        int initialRingNum = rileyEnv.detectNumRings();
+        telemetry.addLine("SCHS: init num rings detected: " + initialRingNum);
+        Log.d("SCHS:", "init num rings detected: " + initialRingNum);
+
     }
 
     @Override
@@ -75,14 +90,81 @@ public class SCHSController extends OpMode {
 
         switch (currState) {
             case STATE_INITIAL:
+                telemetry.addLine("SCHS: inside STATE_INITIAL");
+                Log.d("SCHS:", "inside STATE_INITIAL");
                 if (rileyChassis.encodersAtZero()){
                     //start turning on shooter motor
+                    //newState((State.STATE_TEST_1));
                     newState((State.STATE_TEST_1));
                 } else {
                     telemetry.addLine("SCHS: STATE_INITIAL else");
                     Log.d("SCHS:", "STATE_INITIAL else");
                 }
                 break;
+
+            case STATE_SCAN_RINGS:
+                telemetry.addLine("SCHS: inside STATE_SCAN_RINGS");
+                Log.d("SCHS:", " inside STATE_SCAN_RINGS");
+                numRings = rileyEnv.detectNumRings();
+
+                telemetry.addLine("numRings:" + numRings);
+                Log.d("SCHS: SCAN_RINGS", "numRings:" + numRings);
+
+                break;
+
+            case STATE_GO_TO_TARGET:
+                if (rileyChassis.encodersAtZero()) {
+                    telemetry.addLine("SCHS: inside STATE_GO_TO_TARGET");
+                    Log.d("SCHS:", " inside STATE_GO_TO_TARGET");
+
+                    if (numRings == 1) {
+                        startPath(goToTargetB);
+                    } else if (numRings == 4) {
+                        startPath(goToTargetC);
+                    } else {
+                        startPath(goToTargetA);
+                    }
+                    newState(State.STATE_LOWER_WOBBLE_ARM);
+                } else {
+                    telemetry.addLine("SCHS: inside STATE_GO_TO_TARGET else");
+                    Log.d("SCHS:", " inside STATE_GO_TO_TARGET else");
+                }
+                break;
+
+            case STATE_LOWER_WOBBLE_ARM:
+                if (pathComplete(DRIVE, false)) {
+                    telemetry.addLine("SCHS: inside STATE_LOWER_WOBBLE_ARM");
+                    Log.d("SCHS:", " inside STATE_LOWER_WOBBLE_ARM");
+                    //lower wobble arm
+                    newState(State.STATE_RELEASE_WOBBLE);
+                } else {
+                    telemetry.addLine("SCHS: inside STATE_LOWER_WOBBLE_ARM else");
+                    Log.d("SCHS:", " inside STATE_LOWER_WOBBLE_ARM else");
+                }
+                break;
+
+            case STATE_RELEASE_WOBBLE:
+                if (pathComplete(WOBBLE, false)) {
+                    telemetry.addLine("SCHS: inside STATE_RELEASE_WOBBLE");
+                    Log.d("SCHS:", " inside STATE_RELEASE_WOBBLE");
+                    //release wobble goal servo
+                    newState(State.STATE_GO_TO_LAUNCH);
+                } else {
+                    telemetry.addLine("SCHS: inside STATE_RELEASE_WOBBLE else");
+                    Log.d("SCHS:", " inside STATE_RELEASE_WOBBLE else");
+                }
+                break;
+
+            case STATE_GO_TO_LAUNCH:
+                telemetry.addLine("SCHS: inside STATE_GO_TO_LAUNCH");
+                Log.d("SCHS:", " inside STATE_GO_TO_LAUNCH");
+
+                if (numRings == 1) {
+                    startPath(goToLaunchB);
+                } else if (numRings == 4) {
+                    startPath(goToLaunchC);
+                }
+                newState(State.STATE_STOP);
 
             case STATE_TEST_1:
                 if (rileyChassis.encodersAtZero()) {

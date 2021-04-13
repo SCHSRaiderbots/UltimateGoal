@@ -11,6 +11,7 @@ class SCHSConstants {
     static final double ROBOT_WIDTH = 14; //inches
     static final double ROBOT_MAX_SPEED = 4; //feet/sec
     static final int DRIVE = 0;
+    static final int WOBBLE = 1;
     static final int LONG_DRIVE = 3;
 
     //Servo Constants
@@ -61,9 +62,43 @@ class SCHSConstants {
             new SCHSPathSeg(24, 24, 0.75),  // Forward 2 ft
     };
 
+    //go to target zone A to deposit wobble goal (0 rings)
+    static final SCHSPathSeg[] goToTargetA = {
+            new SCHSPathSeg(66, 66, 0.75),  // Forward 5.5 ft
+            new SCHSPathSeg(TURN_VALUE_90, -TURN_VALUE_90, 0.75),  // Right 90
+            new SCHSPathSeg(6, 6, 0.75),  // Forward 6 in
+    };
+
+    //go to target zone B to deposit wobble goal (1 rings)
+    static final SCHSPathSeg[] goToTargetB = {
+            new SCHSPathSeg(75, 75, 0.75),  // Forward 6 ft 3 in
+    };
+
+    //go to launch line from target zone B
+    static final SCHSPathSeg[] goToLaunchB = {
+            new SCHSPathSeg(-6, -6, 0.75),  // Back 6 in
+    };
+
+    //go to target zone C to deposit wobble goal (4 rings)
+    static final SCHSPathSeg[] goToTargetC = {
+            new SCHSPathSeg(114, 114, 0.75),  // Forward 9 ft 6in
+            new SCHSPathSeg(TURN_VALUE_90, -TURN_VALUE_90, 0.75),  // Right 90
+            new SCHSPathSeg(6, 6, 0.75),  // Forward 6 in
+    };
+
+    //go to launch line from target zone C
+    static final SCHSPathSeg[] goToLaunchC = {
+            new SCHSPathSeg(-6, -6, 0.75),  // Back 6in
+            new SCHSPathSeg(-TURN_VALUE_90, TURN_VALUE_90, 0.75),  // Left 90
+            new SCHSPathSeg(-48, -48, 0.75),  // Back 4 ft
+    };
+
     //Tensor Flow Object detection
-    static final String VUFORIA_KEY = "";
-    static final String TFOD_MODEL_ASSET = "";
+    static final String VUFORIA_KEY = "AUnX7nP/////AAABmZjfOTd2skx4p/r+LBA29VQAFar5mbPnEfGtcl78mMIqK+EtsUOR33zwyiDCmj1oYMUx0P4eWZGi6EMhZgTM66/5llx5azKwGGxGmTJUGotbAekyZgxYR7SWDme6xMYGR68jZcR9rkvJxfB1ZKFytPXWeRpwzSAQJ0VACF/hdguUyfA6SSkF2dnc/iH76TkSV3hA4zz0v3wjHfQmmNBvrtgPklvfOTX2f+G5tBfBq75PEx52LaX+tOPTtBajR9MFwVT26kcqFz2GJCEBgjO3PX1St0xNJBqbbudKvZ+B/6xWuVhwHVqwOgy/RsuHLBFskh4n9Ec1xnuB9uCnQXrrliEtcR1TbnmIEYTX6FZtxF5H";
+    static final String TFOD_MODEL_ASSET = "UltimateGoal.tflite";
+    static final int SCAN_TIME = 3000;
+    static final String LABEL_FIRST_ELEMENT = "Quad";
+    static final String LABEL_SECOND_ELEMENT = "Single";
 
     //core hex motor constants
     static final double CHMOTOR_COUNTS_PER_REVOLUTION = 288;

@@ -171,7 +171,6 @@ public class DriveRaiderbot extends LinearOpMode {
                 grabberServo.setPosition(0.998);
             }
 
-
             //turn wobble goal arm (grabberMotor) by moving left joystick up and down on gamepad2
             double grabberPower = -gamepad2.left_stick_y;
             grabberPower = Range.clip(grabberPower, -1.0, 1.0);
