@@ -142,7 +142,7 @@ public class Demo extends OpMode
 
         // flail motor hack
         // TODO: hack!
-        dcmotorFlail = hardwareMap.get(DcMotorEx.class, "motorWobble");
+        dcmotorFlail = hardwareMap.get(DcMotorEx.class, "motorIntake");
         //dcmotorFlail.setDirection(DcMotorSimple.Direction.REVERSE);
 
 

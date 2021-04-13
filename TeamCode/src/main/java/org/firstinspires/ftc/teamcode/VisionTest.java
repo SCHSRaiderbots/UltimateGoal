@@ -126,7 +126,7 @@ public class VisionTest extends OpMode {
             // Aspect ratio does have an effect.
             // with a phone, I can get 0.828 from about 5 feet away. At home, I got a .89
             // with a webcam at home, got 0.96!
-            tfod.setZoom(2.0, 4.0/3.0);
+            // tfod.setZoom(2.0, 4.0/3.0);
             // with a phone, I can get 0.89 from about 5 feet away.
             // at home with webcam, got a .98 quad and .93 single
             // but sometimes it sees a quad as a single
@@ -136,6 +136,10 @@ public class VisionTest extends OpMode {
             // at home with webcam, got 0.828 for a quad
             //          single not detected
             // tfod.setZoom(1.0, 4.0/3.0);
+
+            // with logitech, .97 and .82 with (2.0, 4/3)
+            //  .96 and .82 with (1.5, 1.78)
+            tfod.setZoom(1.5, 1.78);
         }
 
     }
