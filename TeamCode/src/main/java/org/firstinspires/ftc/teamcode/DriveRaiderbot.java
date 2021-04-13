@@ -64,11 +64,13 @@ public class DriveRaiderbot extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
-    //private DcMotorEx shooterMotor1 = null;
-    //private DcMotorEx shooterMotor2 = null;
+    private DcMotorEx shooterMotor1 = null;
+    private DcMotorEx shooterMotor2 = null;
+    private Servo shooterServo = null;
 
     private DcMotorEx leftDrive = null;
     private DcMotorEx rightDrive = null;
+    private DcMotorEx motorIntake = null;
 
     private Servo grabberServo = null;
     private DcMotorEx grabberMotor = null;
@@ -81,24 +83,27 @@ public class DriveRaiderbot extends LinearOpMode {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        //shooterMotor1 = hardwareMap.get(DcMotorEx.class, "shooterMotor1");
-        //shooterMotor2 = hardwareMap.get(DcMotorEx.class, "shooterMotor2");
+        shooterMotor1 = hardwareMap.get(DcMotorEx.class, "shooterMotor1");
+        shooterMotor2 = hardwareMap.get(DcMotorEx.class, "shooterMotor2");
+        shooterServo = hardwareMap.get(Servo.class, "shooterServo");
 
         leftDrive  = hardwareMap.get(DcMotorEx.class, "leftMotor");
         rightDrive = hardwareMap.get(DcMotorEx.class, "rightMotor");
+        motorIntake = hardwareMap.get(DcMotorEx.class, "intakeMotor");
 
         grabberServo = hardwareMap.get(Servo.class, "grabberServo");
         grabberMotor = hardwareMap.get(DcMotorEx.class, "grabberMotor");
 
         // Needs one side to be reversed and one side to be forward so that ring shoots out in correct direction
         // Wheels are on either side of ring, so reverse one motor to run backwards to allow ring to launch forward
-        //shooterMotor1.setDirection(DcMotor.Direction.FORWARD);
-        //shooterMotor2.setDirection(DcMotor.Direction.REVERSE);
+        shooterMotor1.setDirection(DcMotor.Direction.FORWARD);
+        shooterMotor2.setDirection(DcMotor.Direction.REVERSE);
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
         leftDrive.setDirection(DcMotor.Direction.REVERSE);
         rightDrive.setDirection(DcMotor.Direction.FORWARD);
+        motorIntake.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -116,9 +121,6 @@ public class DriveRaiderbot extends LinearOpMode {
             leftPower    = Range.clip(drive + turn, -1.0, 1.0) ;
             rightPower   = Range.clip(drive - turn, -1.0, 1.0) ;
 
-            double velocity = gamepad2.left_stick_y * 650;
-            velocity = Range.clip(velocity, -600, 600) ;
-
             // Choose to drive using either Tank Mode, or POV Mode
             // Comment out the method that's not used.  The default below is POV.
 
@@ -129,14 +131,38 @@ public class DriveRaiderbot extends LinearOpMode {
             // - This requires no math, but it is hard to drive forward slowly and keep straight.
             // leftPower  = -gamepad1.left_stick_y ;
             // rightPower = -gamepad1.right_stick_y ;
+//Input velocity from gamepad joystick
+            double velocity = gamepad2.left_stick_y * 2000;
+            velocity = Range.clip(velocity, -2000, 2000) ;
 
-            // Send calculated power to wheels
-            //shooterMotor1.setVelocity(velocity, AngleUnit.RADIANS);
-            //shooterMotor2.setVelocity(velocity, AngleUnit.RADIANS);
+            // Send calculated velocity to shooter motors
+            shooterMotor1.setVelocity(velocity);
+            shooterMotor2.setVelocity(velocity);
 
+            //full blast (highest speed and distance) - velocity ~ 2000 ticks/sec
+            double BLAST_SPEED = 2000;
+            double HALF_BLAST = 1000;
+            if (gamepad2.a) {
+                shooterMotor1.setVelocity(BLAST_SPEED);
+                shooterMotor2.setVelocity(BLAST_SPEED);
+            }
+
+            if (gamepad2.b) {
+                shooterMotor1.setVelocity(HALF_BLAST);
+                shooterMotor2.setVelocity(HALF_BLAST);
+            }
+
+            shooterServo.setDirection(Servo.Direction.FORWARD);
+            //open and close grabber servo with x and y buttons on gamepad2
+            if (gamepad2.x) {
+                shooterServo.setPosition(0);
+            } else if (gamepad2.y) {
+                shooterServo.setPosition(0.2);
+            }
             leftDrive.setPower(leftPower);
             rightDrive.setPower(rightPower);
 
+            motorIntake.setPower(gamepad1.right_trigger);
 
             //open and close grabber servo with x and y buttons on gamepad2
             if (gamepad2.x) {
@@ -152,14 +178,14 @@ public class DriveRaiderbot extends LinearOpMode {
 
             int holdPosition = 0; //placeholder
             int timesChecked = 0;
-            
+
             if (grabberPower == 0) {  //not optimal as it resets the mode every cycle
                 if (timesChecked == 0) {
                     holdPosition = grabberMotor.getCurrentPosition();
                     timesChecked++;
                 }
-                grabberMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 grabberMotor.setTargetPosition(holdPosition);
+                grabberMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 grabberMotor.setPower(0.4); //random value because powerArm is 0
             } else {
                 grabberMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -172,7 +198,6 @@ public class DriveRaiderbot extends LinearOpMode {
             }
 
             grabberMotor.setPower(grabberPower);
-
 
             // Show the elapsed game time and wheel power and shooter motor velocity (input and actual)
             telemetry.addData("Status", "Run Time: " + runtime.toString());
