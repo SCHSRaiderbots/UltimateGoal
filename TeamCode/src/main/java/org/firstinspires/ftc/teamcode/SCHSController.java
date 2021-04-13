@@ -16,6 +16,7 @@ public class SCHSController extends OpMode {
 
     private SCHSDrive rileyChassis = null;
     private SCHSDetection rileyEnv = null;
+    private SCHSShooter rileyShooter = null;
     private boolean isInitialized = false;
     private double leftDist;
     private double rightDist;
@@ -52,6 +53,9 @@ public class SCHSController extends OpMode {
         //initialize objects for chassis, shooter, etc
         rileyChassis = new SCHSDrive();
         rileyChassis.initialize(hardwareMap);
+
+        rileyShooter = new SCHSShooter();
+        rileyShooter.initialize(hardwareMap);
 
         rileyEnv = new SCHSDetection();
         rileyEnv.initialize(hardwareMap);
@@ -94,8 +98,9 @@ public class SCHSController extends OpMode {
                 Log.d("SCHS:", "inside STATE_INITIAL");
                 if (rileyChassis.encodersAtZero()){
                     //start turning on shooter motor
+                    rileyShooter.shoot(SHOOT_VEL);
                     //newState((State.STATE_TEST_1));
-                    newState((State.STATE_TEST_1));
+                    newState((State.STATE_SCAN_RINGS));
                 } else {
                     telemetry.addLine("SCHS: STATE_INITIAL else");
                     Log.d("SCHS:", "STATE_INITIAL else");
@@ -113,7 +118,7 @@ public class SCHSController extends OpMode {
                 break;
 
             case STATE_GO_TO_TARGET:
-                if (rileyChassis.encodersAtZero()) {
+                if (!rileyShooter.getIsShooting()) {
                     telemetry.addLine("SCHS: inside STATE_GO_TO_TARGET");
                     Log.d("SCHS:", " inside STATE_GO_TO_TARGET");
 
