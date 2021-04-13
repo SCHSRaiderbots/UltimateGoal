@@ -68,12 +68,101 @@ public class DriveRaiderbot extends LinearOpMode {
     private DcMotorEx shooterMotor2 = null;
     private Servo shooterServo = null;
 
-    private DcMotorEx leftDrive = null;
-    private DcMotorEx rightDrive = null;
+    private DcMotorEx leftMotor = null;
+    private DcMotorEx rightMotor = null;
     private DcMotorEx motorIntake = null;
 
     private Servo grabberServo = null;
     private DcMotorEx grabberMotor = null;
+
+    private final int creepConstant = 904;
+    private int[] creepArray = new int[2];
+    private double driveMultiplier = 0.5;
+    private double turnMultiplier = 0.4;
+
+    //Creep methods and helper methods - creep up/around slowly with d-pad
+    private void creep() {
+
+        int currentPosLeft = leftMotor.getCurrentPosition();
+        int currentPosRight = rightMotor.getCurrentPosition();
+
+        setCreepArray(0, 0); //changed to be similar to old creep method which reset targets to 0 every time it ran
+
+        //DEFAULT ELSE WILL NEVER BE CALLED BECAUSE THE METHOD IS ONLY EVER CALLED WHENEVER THE DPAD IS PRESSED
+        if (gamepad2.dpad_left)
+            creepLeft(currentPosLeft, currentPosRight);
+        else if (gamepad2.dpad_right)
+            creepRight(currentPosLeft, currentPosRight);
+        else if (gamepad2.dpad_up)
+            creepForward(currentPosLeft, currentPosRight);
+        else if (gamepad2.dpad_down)
+            creepBack(currentPosLeft, currentPosRight);
+
+
+        leftMotor.setTargetPosition(getCreepArrayLeftPosition());
+        rightMotor.setTargetPosition(getCreepArrayRightPosition());
+
+        leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        leftMotor.setPower(0.1);
+        rightMotor.setPower(0.1);
+    }
+
+    private void creepBack(int leftPos, int rightPos) {
+
+        int targetPosLeft = leftPos - creepConstant;
+        int targetPosRight = rightPos - creepConstant;
+
+        setCreepArray(targetPosLeft, targetPosRight);
+
+    }
+
+    private void creepForward(int leftPos, int rightPos) {
+
+        int targetPosLeft = leftPos + creepConstant;
+        int targetPosRight = rightPos + creepConstant;
+
+        setCreepArray(targetPosLeft, targetPosRight);
+
+    }
+
+    private void creepLeft(int leftPos, int rightPos) {
+
+        int targetPosLeft = leftPos - creepConstant;
+        int targetPosRight = rightPos + creepConstant;
+
+        setCreepArray(targetPosLeft, targetPosRight);
+
+    }
+
+    private void creepRight(int leftPos, int rightPos) {
+
+        int targetPosLeft = leftPos + creepConstant;
+        int targetPosRight = rightPos - creepConstant;
+
+        setCreepArray(targetPosLeft, targetPosRight);
+
+    }
+
+    private void setCreepArray(int leftTarget, int rightTarget) {
+
+        creepArray[0] = leftTarget;
+        creepArray[1] = rightTarget;
+
+    }
+
+    private int getCreepArrayLeftPosition() {
+
+        return creepArray[0];
+
+    }
+
+    private int getCreepArrayRightPosition() {
+
+        return creepArray[1];
+
+    }
 
     @Override
     public void runOpMode() {
@@ -87,8 +176,8 @@ public class DriveRaiderbot extends LinearOpMode {
         shooterMotor2 = hardwareMap.get(DcMotorEx.class, "shooterMotor2");
         shooterServo = hardwareMap.get(Servo.class, "shooterServo");
 
-        leftDrive  = hardwareMap.get(DcMotorEx.class, "leftMotor");
-        rightDrive = hardwareMap.get(DcMotorEx.class, "rightMotor");
+        leftMotor  = hardwareMap.get(DcMotorEx.class, "leftMotor");
+        rightMotor = hardwareMap.get(DcMotorEx.class, "rightMotor");
         motorIntake = hardwareMap.get(DcMotorEx.class, "intakeMotor");
 
         grabberServo = hardwareMap.get(Servo.class, "grabberServo");
@@ -101,8 +190,8 @@ public class DriveRaiderbot extends LinearOpMode {
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
-        leftDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightDrive.setDirection(DcMotor.Direction.FORWARD);
+        leftMotor.setDirection(DcMotor.Direction.REVERSE);
+        rightMotor.setDirection(DcMotor.Direction.FORWARD);
         motorIntake.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Wait for the game to start (driver presses PLAY)
@@ -121,6 +210,10 @@ public class DriveRaiderbot extends LinearOpMode {
             leftPower    = Range.clip(drive + turn, -1.0, 1.0) ;
             rightPower   = Range.clip(drive - turn, -1.0, 1.0) ;
 
+            if (gamepad2.dpad_up || gamepad2.dpad_down || gamepad2.dpad_left || gamepad2.dpad_right) {
+                creep();
+            }
+            
             // Choose to drive using either Tank Mode, or POV Mode
             // Comment out the method that's not used.  The default below is POV.
 
@@ -159,8 +252,8 @@ public class DriveRaiderbot extends LinearOpMode {
             } else if (gamepad2.right_bumper) {
                 shooterServo.setPosition(0.2);
             }
-            leftDrive.setPower(leftPower);
-            rightDrive.setPower(rightPower);
+            leftMotor.setPower(leftPower);
+            rightMotor.setPower(rightPower);
 
             motorIntake.setPower(gamepad1.right_trigger);
 
