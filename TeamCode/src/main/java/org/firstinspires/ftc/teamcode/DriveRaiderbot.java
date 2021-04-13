@@ -78,7 +78,6 @@ public class DriveRaiderbot extends LinearOpMode {
     private final int creepConstant = 904;
     private int[] creepArray = new int[2];
     private double driveMultiplier = 0.5;
-    private double turnMultiplier = 0.4;
 
     //Creep methods and helper methods - creep up/around slowly with d-pad
     private void creep() {
@@ -201,19 +200,25 @@ public class DriveRaiderbot extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
+            if (gamepad1.a) {
+                driveMultiplier = 1;
+            } else if (!gamepad1.a) {
+                driveMultiplier = 0.5;
+            }
+
             // Setup a variable for each drive wheel to save power level for telemetry
             double leftPower;
             double rightPower;
 
             double drive = -gamepad1.left_stick_y;
             double turn  =  gamepad1.right_stick_x;
-            leftPower    = Range.clip(drive + turn, -1.0, 1.0) ;
-            rightPower   = Range.clip(drive - turn, -1.0, 1.0) ;
+            leftPower    = driveMultiplier * (Range.clip(drive + turn, -1.0, 1.0)) ;
+            rightPower   = driveMultiplier * (Range.clip(drive - turn, -1.0, 1.0)) ;
 
             if (gamepad2.dpad_up || gamepad2.dpad_down || gamepad2.dpad_left || gamepad2.dpad_right) {
                 creep();
             }
-            
+
             // Choose to drive using either Tank Mode, or POV Mode
             // Comment out the method that's not used.  The default below is POV.
 
