@@ -150,6 +150,7 @@ public class SCHSController extends OpMode {
                     //release wobble goal servo
                     newState(State.STATE_GO_TO_LAUNCH);
                 } else {
+
                     telemetry.addLine("SCHS: inside STATE_RELEASE_WOBBLE else");
                     Log.d("SCHS:", " inside STATE_RELEASE_WOBBLE else");
                 }

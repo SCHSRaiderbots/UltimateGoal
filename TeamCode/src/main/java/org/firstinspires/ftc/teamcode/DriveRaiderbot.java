@@ -154,9 +154,9 @@ public class DriveRaiderbot extends LinearOpMode {
 
             shooterServo.setDirection(Servo.Direction.FORWARD);
             //open and close grabber servo with x and y buttons on gamepad2
-            if (gamepad2.x) {
+            if (gamepad2.left_bumper) {
                 shooterServo.setPosition(0);
-            } else if (gamepad2.y) {
+            } else if (gamepad2.right_bumper) {
                 shooterServo.setPosition(0.2);
             }
             leftDrive.setPower(leftPower);
@@ -172,7 +172,7 @@ public class DriveRaiderbot extends LinearOpMode {
             }
 
             //turn wobble goal arm (grabberMotor) by moving left joystick up and down on gamepad2
-            double grabberPower = -gamepad2.left_stick_y;
+            double grabberPower = -gamepad2.right_stick_y;
             grabberPower = Range.clip(grabberPower, -1.0, 1.0);
 
             int holdPosition = 0; //placeholder
