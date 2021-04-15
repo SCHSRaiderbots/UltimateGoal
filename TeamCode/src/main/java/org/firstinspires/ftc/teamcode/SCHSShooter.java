@@ -66,7 +66,7 @@ class SCHSShooter {
 
     public void startShooters(double velocity) {
         shooterMotorLeft.setVelocity(SHOOT_VEL);
-        shooterMotorRight.setVelocity(SHOOT_VEL - 500);
+        shooterMotorRight.setVelocity(SHOOT_VEL - 100);
     }
 
     public void stopShooters() {

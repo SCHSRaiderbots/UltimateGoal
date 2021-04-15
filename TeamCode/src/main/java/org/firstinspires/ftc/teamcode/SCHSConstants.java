@@ -6,7 +6,7 @@ class SCHSConstants {
     static final double POWER_FULL = 1;
     static final double POWER_HALF = 0.5;
     static final double POWER_TURN_SPEED = 0.5;
-    static final double SHOOT_VEL = 1500; //2000 = too much, fix/modify this value after testing, velocity for shooting from back wall starting position
+    static final double SHOOT_VEL = 1200; //2000 = too much, fix/modify this value after testing, velocity for shooting from back wall starting position
 
     //Robot Constants
     static final double ROBOT_WIDTH = 14; //inches

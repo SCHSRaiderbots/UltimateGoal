@@ -77,7 +77,7 @@ public class DriveRaiderbot extends LinearOpMode {
 
     private final int creepConstant = 904;
     private int[] creepArray = new int[2];
-    private double driveMultiplier = 0.5;
+    private double driveMultiplier = 0.75;
 
     //Creep methods and helper methods - creep up/around slowly with d-pad
     private void creep() {
@@ -96,6 +96,7 @@ public class DriveRaiderbot extends LinearOpMode {
             creepForward(currentPosLeft, currentPosRight);
         else if (gamepad2.dpad_down)
             creepBack(currentPosLeft, currentPosRight);
+
 
 
         leftMotor.setTargetPosition(getCreepArrayLeftPosition());
@@ -181,6 +182,7 @@ public class DriveRaiderbot extends LinearOpMode {
 
         grabberServo = hardwareMap.get(Servo.class, "grabberServo");
         grabberMotor = hardwareMap.get(DcMotorEx.class, "grabberMotor");
+        grabberMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         // Needs one side to be reversed and one side to be forward so that ring shoots out in correct direction
         // Wheels are on either side of ring, so reverse one motor to run backwards to allow ring to launch forward
@@ -215,9 +217,36 @@ public class DriveRaiderbot extends LinearOpMode {
             leftPower    = driveMultiplier * (Range.clip(drive + turn, -1.0, 1.0)) ;
             rightPower   = driveMultiplier * (Range.clip(drive - turn, -1.0, 1.0)) ;
 
-            if (gamepad2.dpad_up || gamepad2.dpad_down || gamepad2.dpad_left || gamepad2.dpad_right) {
+            /*if (gamepad2.dpad_up || gamepad2.dpad_down || gamepad2.dpad_left || gamepad2.dpad_right) {
                 creep();
+            }*/
+
+            if (gamepad2.dpad_up) { //wobble goal arm straight up
+                grabberMotor.setTargetPosition(141);
+                grabberMotor.setPower(1);
+                grabberMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                telemetry.addLine("dpad Up is pressed");
             }
+            if (gamepad2.dpad_right) {  //wobble goal arm straight out right
+                grabberMotor.setTargetPosition(313);
+                grabberMotor.setPower(1);
+                grabberMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                telemetry.addLine("dpad right is pressed");
+            }
+            if (gamepad2.dpad_left) {  //wobble goal arm diagonally left in, to put wobble over wall
+                grabberMotor.setTargetPosition(87);
+                grabberMotor.setPower(1);
+                grabberMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                telemetry.addLine("dpad left is pressed");
+            }
+            if (gamepad2.dpad_down) {  //wobble goal arm in most inside position
+                grabberMotor.setTargetPosition(0);
+                grabberMotor.setPower(1);
+                grabberMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                telemetry.addLine("dpad down is pressed");
+            }
+
+
 
             // Choose to drive using either Tank Mode, or POV Mode
             // Comment out the method that's not used.  The default below is POV.
@@ -238,11 +267,11 @@ public class DriveRaiderbot extends LinearOpMode {
             shooterMotor2.setVelocity(velocity);
 
             //full blast (highest speed and distance) - velocity ~ 2000 ticks/sec
-            double BLAST_SPEED = 2000;
-            double HALF_BLAST = 1000;
+            double BLAST_SPEED = 1200;
+            double HALF_BLAST = 1500;
             if (gamepad2.a) {
                 shooterMotor1.setVelocity(BLAST_SPEED);
-                shooterMotor2.setVelocity(BLAST_SPEED);
+                shooterMotor2.setVelocity(BLAST_SPEED - 100);
             }
 
             if (gamepad2.b) {
@@ -251,12 +280,21 @@ public class DriveRaiderbot extends LinearOpMode {
             }
 
             shooterServo.setDirection(Servo.Direction.FORWARD);
-            //open and close grabber servo with x and y buttons on gamepad2
-            if (gamepad2.left_bumper) {
+            //open and close grabber servo with L! and R1 bumper buttons on gamepad2
+            /*if (gamepad2.left_bumper) {
                 shooterServo.setPosition(0);
             } else if (gamepad2.right_bumper) {
                 shooterServo.setPosition(0.2);
+            }/*
+
+            */
+
+            if (gamepad2.right_bumper) {
+                shooterServo.setPosition(0.2);
+            } else if (!gamepad2.right_bumper) {
+                shooterServo.setPosition(0);
             }
+
             leftMotor.setPower(leftPower);
             rightMotor.setPower(rightPower);
 
@@ -271,9 +309,16 @@ public class DriveRaiderbot extends LinearOpMode {
 
             //turn wobble goal arm (grabberMotor) by moving left joystick up and down on gamepad2
             double grabberPower = -gamepad2.right_stick_y;
-            grabberPower = Range.clip(grabberPower, -1.0, 1.0);
 
-            int holdPosition = 0; //placeholder
+            /*
+            if (grabberPower >= 0) {
+                grabberPower = grabberPower*grabberPower;
+            } else if (grabberPower < 0) {
+                grabberPower = -grabberPower*grabberPower;
+            }
+            grabberPower = Range.clip(grabberPower, -1.0, 1.0);/*
+
+            /*int holdPosition = 0; //placeholder
             int timesChecked = 0;
 
             if (grabberPower == 0) {  //not optimal as it resets the mode every cycle
@@ -292,17 +337,20 @@ public class DriveRaiderbot extends LinearOpMode {
                 if (grabberPower > 0)
                     grabberMotor.setPower(grabberPower/1.77);
                 timesChecked = 0;
-            }
+            }*/
 
-            grabberMotor.setPower(grabberPower);
+            grabberPower = Range.clip(grabberPower, -0.2, 0.2);
+            grabberMotor.setPower(grabberPower*0.8);
 
             // Show the elapsed game time and wheel power and shooter motor velocity (input and actual)
+
+            telemetry.addData("Status", "grabber position:" + grabberMotor.getCurrentPosition());
+            telemetry.addData("Status", "Motor velocity input: " + velocity);
+            telemetry.addData("Status", "Shooter Motor 1 velocity actual (tick/sec): " + shooterMotor1.getVelocity());
+            telemetry.addData("Status", "Shooter Motor 2 velocity actual (tick/sec): " + shooterMotor2.getVelocity());
+
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
-            telemetry.addData("Status", "Motor velocity input (radians): " + velocity);
-            //telemetry.addData("Status", "Motor velocity actual (radians): " + shooterMotor.getVelocity(AngleUnit.RADIANS));
-            //telemetry.addData("Status", "Shooter Motor 1 velocity actual (tick/sec): " + shooterMotor1.getVelocity());
-            //telemetry.addData("Status", "Shooter Motor 2 velocity actual (tick/sec): " + shooterMotor2.getVelocity());
             telemetry.addData("Status", "Grabber Servo Position: " + grabberServo.getPosition());
             telemetry.update();
         }

@@ -57,8 +57,8 @@ public class SCHSController extends OpMode {
         rileyShooter = new SCHSShooter();
         rileyShooter.initialize(hardwareMap);
 
-        rileyEnv = new SCHSDetection();
-        rileyEnv.initialize(hardwareMap);
+        //rileyEnv = new SCHSDetection();
+        //rileyEnv.initialize(hardwareMap);
 
         //moved resetting encoders to init
         rileyChassis.resetEncoders();
@@ -69,10 +69,11 @@ public class SCHSController extends OpMode {
         msStuckDetectInit = 20000;
         msStuckDetectInitLoop = 20000;
 
+        /*
         //detect stack of rings here
         int initialRingNum = rileyEnv.detectNumRings();
         telemetry.addLine("SCHS: init num rings detected: " + initialRingNum);
-        Log.d("SCHS:", "init num rings detected: " + initialRingNum);
+        Log.d("SCHS:", "init num rings detected: " + initialRingNum);*/
 
     }
 
@@ -99,8 +100,8 @@ public class SCHSController extends OpMode {
                 if (rileyChassis.encodersAtZero()){
                     //start turning on shooter motor
                     rileyShooter.shoot(SHOOT_VEL);
-                    //newState((State.STATE_TEST_1));
-                    newState((State.STATE_SCAN_RINGS));
+                    newState((State.STATE_STOP));
+                    //newState((State.STATE_SCAN_RINGS));
                 } else {
                     telemetry.addLine("SCHS: STATE_INITIAL else");
                     Log.d("SCHS:", "STATE_INITIAL else");
@@ -110,10 +111,10 @@ public class SCHSController extends OpMode {
             case STATE_SCAN_RINGS:
                 telemetry.addLine("SCHS: inside STATE_SCAN_RINGS");
                 Log.d("SCHS:", " inside STATE_SCAN_RINGS");
-                numRings = rileyEnv.detectNumRings();
+                /*numRings = rileyEnv.detectNumRings();
 
                 telemetry.addLine("numRings:" + numRings);
-                Log.d("SCHS: SCAN_RINGS", "numRings:" + numRings);
+                Log.d("SCHS: SCAN_RINGS", "numRings:" + numRings);*/
 
                 break;
 
@@ -183,13 +184,22 @@ public class SCHSController extends OpMode {
                 break;
 
             case STATE_STOP:
-                if (pathComplete(DRIVE, false)) {
+                if (!rileyShooter.getIsShooting()) {
                     Log.d("SCHS", "inside STATES_STOP");
                     telemetry.addLine("STATES_STOP");
                 } else {
                     telemetry.addLine("SCHS: STATE_STOP else");
                     Log.d("SCHS:", "STATE_STOP else");
                 }
+
+                /*
+                if (pathComplete(DRIVE, false)) {
+                    Log.d("SCHS", "inside STATES_STOP");
+                    telemetry.addLine("STATES_STOP");
+                } else {
+                    telemetry.addLine("SCHS: STATE_STOP else");
+                    Log.d("SCHS:", "STATE_STOP else");
+                }*/
                 break;
                 
         }
