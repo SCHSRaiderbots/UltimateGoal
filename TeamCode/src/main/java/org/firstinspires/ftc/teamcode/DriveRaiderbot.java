@@ -79,6 +79,7 @@ public class DriveRaiderbot extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
+<<<<<<< HEAD
     private DcMotorEx shooterMotor1 = null;
     private DcMotorEx shooterMotor2 = null;
 <<<<<<< HEAD
@@ -92,6 +93,13 @@ public class DriveRaiderbot extends LinearOpMode {
     private DcMotorEx rightDrive = null;
 >>>>>>> master
     private DcMotorEx motorIntake = null;
+=======
+    //private DcMotorEx shooterMotor1 = null;
+    //private DcMotorEx shooterMotor2 = null;
+
+    private DcMotorEx leftDrive = null;
+    private DcMotorEx rightDrive = null;
+>>>>>>> master
 
     private Servo grabberServo = null;
     private DcMotorEx grabberMotor = null;
@@ -198,6 +206,7 @@ public class DriveRaiderbot extends LinearOpMode {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
+<<<<<<< HEAD
         shooterMotor1 = hardwareMap.get(DcMotorEx.class, "shooterMotor1");
         shooterMotor2 = hardwareMap.get(DcMotorEx.class, "shooterMotor2");
 <<<<<<< HEAD
@@ -211,6 +220,13 @@ public class DriveRaiderbot extends LinearOpMode {
         rightDrive = hardwareMap.get(DcMotorEx.class, "rightMotor");
 >>>>>>> master
         motorIntake = hardwareMap.get(DcMotorEx.class, "intakeMotor");
+=======
+        //shooterMotor1 = hardwareMap.get(DcMotorEx.class, "shooterMotor1");
+        //shooterMotor2 = hardwareMap.get(DcMotorEx.class, "shooterMotor2");
+
+        leftDrive  = hardwareMap.get(DcMotorEx.class, "leftMotor");
+        rightDrive = hardwareMap.get(DcMotorEx.class, "rightMotor");
+>>>>>>> master
 
         grabberServo = hardwareMap.get(Servo.class, "grabberServo");
         grabberMotor = hardwareMap.get(DcMotorEx.class, "grabberMotor");
@@ -221,8 +237,13 @@ public class DriveRaiderbot extends LinearOpMode {
 >>>>>>> master
         // Needs one side to be reversed and one side to be forward so that ring shoots out in correct direction
         // Wheels are on either side of ring, so reverse one motor to run backwards to allow ring to launch forward
+<<<<<<< HEAD
         shooterMotor1.setDirection(DcMotor.Direction.FORWARD);
         shooterMotor2.setDirection(DcMotor.Direction.REVERSE);
+=======
+        //shooterMotor1.setDirection(DcMotor.Direction.FORWARD);
+        //shooterMotor2.setDirection(DcMotor.Direction.REVERSE);
+>>>>>>> master
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
@@ -358,7 +379,10 @@ public class DriveRaiderbot extends LinearOpMode {
 =======
         leftDrive.setDirection(DcMotor.Direction.REVERSE);
         rightDrive.setDirection(DcMotor.Direction.FORWARD);
+<<<<<<< HEAD
         motorIntake.setDirection(DcMotorSimple.Direction.FORWARD);
+=======
+>>>>>>> master
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -391,13 +415,21 @@ public class DriveRaiderbot extends LinearOpMode {
             // rightPower = -gamepad1.right_stick_y ;
 
             // Send calculated power to wheels
+<<<<<<< HEAD
             shooterMotor1.setVelocity(velocity, AngleUnit.RADIANS);
             shooterMotor2.setVelocity(velocity, AngleUnit.RADIANS);
+=======
+            //shooterMotor1.setVelocity(velocity, AngleUnit.RADIANS);
+            //shooterMotor2.setVelocity(velocity, AngleUnit.RADIANS);
+>>>>>>> master
 
             leftDrive.setPower(leftPower);
             rightDrive.setPower(rightPower);
 
+<<<<<<< HEAD
             motorIntake.setPower(gamepad1.right_trigger);
+=======
+>>>>>>> master
 
             //open and close grabber servo with x and y buttons on gamepad2
             if (gamepad2.x) {
@@ -410,6 +442,7 @@ public class DriveRaiderbot extends LinearOpMode {
             //turn wobble goal arm (grabberMotor) by moving left joystick up and down on gamepad2
             double grabberPower = -gamepad2.left_stick_y;
             grabberPower = Range.clip(grabberPower, -1.0, 1.0);
+<<<<<<< HEAD
 
             int holdPosition = 0; //placeholder
             int timesChecked = 0;
@@ -432,6 +465,8 @@ public class DriveRaiderbot extends LinearOpMode {
                 timesChecked = 0;
             }
 
+=======
+>>>>>>> master
             grabberMotor.setPower(grabberPower);
 
 

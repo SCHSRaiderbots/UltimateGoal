@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+<<<<<<< HEAD
 import android.util.Log;
 
 <<<<<<< HEAD
@@ -143,4 +144,8 @@ public class SCHSWobbleGoal {
 }
 
 
+>>>>>>> master
+=======
+class SCHSWobbleGoal {
+}
 >>>>>>> master

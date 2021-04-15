@@ -142,8 +142,8 @@ public class Demo extends OpMode
 
         // flail motor hack
         // TODO: hack!
-        dcmotorFlail = hardwareMap.get(DcMotorEx.class, "motorWobble");
-        dcmotorFlail.setDirection(DcMotorSimple.Direction.REVERSE);
+        dcmotorFlail = hardwareMap.get(DcMotorEx.class, "motorIntake");
+        //dcmotorFlail.setDirection(DcMotorSimple.Direction.REVERSE);
 
 
         // TODO: this is a gyro parameter for the 2019 robot
