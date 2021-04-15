@@ -1,11 +1,15 @@
 package org.firstinspires.ftc.teamcode;
 
+<<<<<<< HEAD
 import android.util.Log;
 
+=======
+>>>>>>> master
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+<<<<<<< HEAD
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import static org.firstinspires.ftc.teamcode.SCHSConstants.*;
@@ -77,21 +81,39 @@ public class SCHSController extends OpMode {
         telemetry.addLine("SCHS: init num rings detected: " + initialRingNum);
         Log.d("SCHS:", "init num rings detected: " + initialRingNum);*/
 
+=======
+
+@Autonomous(name="SCHSController", group="SCHS")
+@Disabled
+public class SCHSController extends OpMode {
+
+    @Override
+    public void init() {
+        //initialize objects for chassis, shooter, etc
+        telemetry.addLine("Done Initializing");
+>>>>>>> master
     }
 
     @Override
     public void start() {
         //Set up robot devices, initial state, and game timer
+<<<<<<< HEAD
         rileyChassis.setDrivePower(0,0);
         rileyChassis.setPoseInches(-36, -63, 90);
 
         runtime.reset();
         newState(State.STATE_INITIAL);
         //newState(State.STATE_STONES_FIND_DIST);
+=======
+
+        //runtime.reset();
+        //newState(State.STATE_NAME);
+>>>>>>> master
     }
 
     @Override
     public void loop() {
+<<<<<<< HEAD
         rileyChassis.loop();
         // Send the current state info (state and time) back to first line of driver station telemetry.
 
@@ -360,6 +382,10 @@ public class SCHSController extends OpMode {
 
         Log.d("SCHS:", "moveComplete() no case entered");
         return false;
+=======
+        //state machine goes here
+        // Send the current state info (state and time) back to first line of driver station telemetry.
+>>>>>>> master
     }
 
 }
