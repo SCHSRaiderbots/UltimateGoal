@@ -4,6 +4,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.MotorControlAlgorithm;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
 
@@ -22,12 +24,25 @@ class SCHSWobbleGoal {
 
         motorWobble.setDirection(DcMotorSimple.Direction.FORWARD);
         wobbleServo.setDirection(Servo.Direction.FORWARD);
+        wobbleServo.setPosition(0);
 
-        //set target position to current position
-        motorWobble.setTargetPosition(motorWobble.getCurrentPosition());
+        double F = 32767.0 / (2.0 * 288.0);
+        PIDFCoefficients pidfRUE = new PIDFCoefficients(10.0, 1.0, 0.0, F, MotorControlAlgorithm.PIDF );
+        PIDFCoefficients pidfR2P = new PIDFCoefficients(10.0, 0.0, 0.0, 0.0, MotorControlAlgorithm.PIDF);
+        motorWobble.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfRUE);
+        motorWobble.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, pidfR2P);
+        motorWobble.setDirection(DcMotorSimple.Direction.FORWARD);
+        motorWobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorWobble.setTargetPosition(0);
         motorWobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //set power level to make it move
         motorWobble.setPower(1.0);
+
     }
+
+    public void dropWobble() {
+
+    }
+
+
 
 }
