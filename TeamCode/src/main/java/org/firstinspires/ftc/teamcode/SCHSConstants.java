@@ -6,7 +6,8 @@ class SCHSConstants {
     static final double POWER_FULL = 1;
     static final double POWER_HALF = 0.5;
     static final double POWER_TURN_SPEED = 0.5;
-    static final double SHOOT_VEL = 1200; //2000 = too much, fix/modify this value after testing, velocity for shooting from back wall starting position
+    static final double SHOOT_VEL = 1000; //2000 = too much, fix/modify this value after testing, velocity for shooting from back wall starting position
+    static final int WOBBLE_ARM_DIST = 310;
 
     //Robot Constants
     static final double ROBOT_WIDTH = 14; //inches
@@ -45,15 +46,6 @@ class SCHSConstants {
 
     //Detection Constants, 0, 1, or 4 rings in stack
 
-    //go to foundation
-    static final SCHSPathSeg[] goToFDPath = {
-            new SCHSPathSeg(6, 6, 0.9),  // Forward 3.5 in
-            new SCHSPathSeg(-TURN_VALUE_90, TURN_VALUE_90, 0.9),  // Left 90
-            new SCHSPathSeg(24, 24, 0.9),  // Forward 2 ft
-            new SCHSPathSeg(TURN_VALUE_90, -TURN_VALUE_90, 0.9),  // right 90
-            new SCHSPathSeg(17, 17, 0.9),  // Forward 15
-    };
-
     //test path
     static final SCHSPathSeg[] testPathRun = {
             new SCHSPathSeg(12, 12, 0.75),  // Forward 1 ft
@@ -63,35 +55,43 @@ class SCHSConstants {
             new SCHSPathSeg(24, 24, 0.75),  // Forward 2 ft
     };
 
+    static final SCHSPathSeg[] moveToShoot = {
+            new SCHSPathSeg(52.5, 52.5, 0.9)
+    };
+
     //go to target zone A to deposit wobble goal (0 rings)
     static final SCHSPathSeg[] goToTargetA = {
-            new SCHSPathSeg(66, 66, 0.75),  // Forward 5.5 ft
-            new SCHSPathSeg(TURN_VALUE_90, -TURN_VALUE_90, 0.75),  // Right 90
-            new SCHSPathSeg(6, 6, 0.75),  // Forward 6 in
+            new SCHSPathSeg(13.5, 13.5, 0.9),  // Forward 13.5 in
+            new SCHSPathSeg(-TURN_VALUE_90, TURN_VALUE_90, 0.9),  // Right 90
+            new SCHSPathSeg(6, 6, 0.9),  // Forward 6 in
+    };
+
+    static final SCHSPathSeg[] goToLaunchA = {
+            new SCHSPathSeg(-6, -6, 0.9),  // backward 6 in
     };
 
     //go to target zone B to deposit wobble goal (1 rings)
     static final SCHSPathSeg[] goToTargetB = {
-            new SCHSPathSeg(75, 75, 0.75),  // Forward 6 ft 3 in
+            new SCHSPathSeg(22.5, 22.5, 0.9),  // Forward 22.5 in
     };
 
     //go to launch line from target zone B
     static final SCHSPathSeg[] goToLaunchB = {
-            new SCHSPathSeg(-6, -6, 0.75),  // Back 6 in
+            new SCHSPathSeg(-6, -6, 0.9),  // Back 6 in
     };
 
     //go to target zone C to deposit wobble goal (4 rings)
     static final SCHSPathSeg[] goToTargetC = {
-            new SCHSPathSeg(114, 114, 0.75),  // Forward 9 ft 6in
-            new SCHSPathSeg(TURN_VALUE_90, -TURN_VALUE_90, 0.75),  // Right 90
-            new SCHSPathSeg(6, 6, 0.75),  // Forward 6 in
+            new SCHSPathSeg(62.5, 62.5, 0.9),  // Forward 62.5 in
+            new SCHSPathSeg(-TURN_VALUE_90, TURN_VALUE_90, 0.9),  // Right 90
+            new SCHSPathSeg(6, 6, 0.9),  // Forward 6 in
     };
 
     //go to launch line from target zone C
     static final SCHSPathSeg[] goToLaunchC = {
-            new SCHSPathSeg(-6, -6, 0.75),  // Back 6in
-            new SCHSPathSeg(-TURN_VALUE_90, TURN_VALUE_90, 0.75),  // Left 90
-            new SCHSPathSeg(-48, -48, 0.75),  // Back 4 ft
+            new SCHSPathSeg(-6, -6, 0.9),  // Back 6in
+            new SCHSPathSeg(-TURN_VALUE_90, TURN_VALUE_90, 0.9),  // Left 90
+            new SCHSPathSeg(-48, -48, 0.9),  // Back 4 ft
     };
 
     //Tensor Flow Object detection

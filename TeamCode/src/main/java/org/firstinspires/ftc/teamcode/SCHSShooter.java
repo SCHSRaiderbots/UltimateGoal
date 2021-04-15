@@ -35,7 +35,7 @@ class SCHSShooter {
     public void shoot(double velocity) {
         isShooting = true;
         startShooters(velocity);
-        sleep(2000);
+        sleep(3500);
         servoPushRing();
         sleep(1500);
         reloadServo();

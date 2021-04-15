@@ -17,6 +17,7 @@ public class SCHSController extends OpMode {
     private SCHSDrive rileyChassis = null;
     private SCHSDetection rileyEnv = null;
     private SCHSShooter rileyShooter = null;
+    private SCHSWobbleGoal rileyWobble = null;
     private boolean isInitialized = false;
     private double leftDist;
     private double rightDist;
@@ -25,13 +26,11 @@ public class SCHSController extends OpMode {
 
     private enum State {
         STATE_INITIAL,
-        STATE_START_SHOOTERS,
+        STATE_DEPOSIT_WOBBLE,
         STATE_SHOOT_RINGS,
-        STATE_SHOOT_OFF,
-        STATE_SCAN_RINGS,
+        STATE_MOVE_TO_SHOOT,
         STATE_GO_TO_TARGET,
         STATE_LOWER_WOBBLE_ARM,
-        STATE_RELEASE_WOBBLE,
         STATE_GO_TO_LAUNCH,
 
         STATE_TEST_1,
@@ -56,6 +55,9 @@ public class SCHSController extends OpMode {
 
         rileyShooter = new SCHSShooter();
         rileyShooter.initialize(hardwareMap);
+
+        rileyWobble = new SCHSWobbleGoal();
+        rileyWobble.initialize(hardwareMap);
 
         //rileyEnv = new SCHSDetection();
         //rileyEnv.initialize(hardwareMap);
@@ -98,9 +100,14 @@ public class SCHSController extends OpMode {
                 telemetry.addLine("SCHS: inside STATE_INITIAL");
                 Log.d("SCHS:", "inside STATE_INITIAL");
                 if (rileyChassis.encodersAtZero()){
-                    //start turning on shooter motor
-                    rileyShooter.shoot(SHOOT_VEL);
-                    newState((State.STATE_STOP));
+                    //scan rings
+                    /*numRings = rileyEnv.detectNumRings();
+
+                telemetry.addLine("numRings:" + numRings);
+                Log.d("SCHS: SCAN_RINGS", "numRings:" + numRings);*/
+
+                    numRings = 0;
+                    newState(State.STATE_MOVE_TO_SHOOT);
                     //newState((State.STATE_SCAN_RINGS));
                 } else {
                     telemetry.addLine("SCHS: STATE_INITIAL else");
@@ -108,14 +115,29 @@ public class SCHSController extends OpMode {
                 }
                 break;
 
-            case STATE_SCAN_RINGS:
-                telemetry.addLine("SCHS: inside STATE_SCAN_RINGS");
-                Log.d("SCHS:", " inside STATE_SCAN_RINGS");
-                /*numRings = rileyEnv.detectNumRings();
+            case STATE_MOVE_TO_SHOOT:
+                telemetry.addLine("SCHS: inside STATE_MOVE_TO_SHOOT");
+                Log.d("SCHS:", "inside STATE_MOVE_TO_SHOOT");
+                if (rileyChassis.encodersAtZero()){
+                    startPath(moveToShoot);
+                    newState(State.STATE_SHOOT_RINGS);
+                } else {
+                    telemetry.addLine("SCHS: inside STATE_MOVE_TO_SHOOT");
+                    Log.d("SCHS:", "inside STATE_MOVE_TO_SHOOT");
+                }
+                break;
 
-                telemetry.addLine("numRings:" + numRings);
-                Log.d("SCHS: SCAN_RINGS", "numRings:" + numRings);*/
-
+            case STATE_SHOOT_RINGS:
+                if (pathComplete(DRIVE, false)) {
+                    telemetry.addLine("SCHS: inside STATE_SHOOT_RINGS");
+                    Log.d("SCHS:", " inside STATE_SHOOT_RINGS");
+                    //shoot 3 rings into high goal
+                    rileyShooter.shoot(SHOOT_VEL);
+                    newState(State.STATE_GO_TO_TARGET);
+                } else {
+                    telemetry.addLine("SCHS: inside STATE_SHOOT_RINGS else");
+                    Log.d("SCHS:", " inside STATE_SHOOT_RINGS else");
+                }
                 break;
 
             case STATE_GO_TO_TARGET:
@@ -130,35 +152,24 @@ public class SCHSController extends OpMode {
                     } else {
                         startPath(goToTargetA);
                     }
-                    newState(State.STATE_LOWER_WOBBLE_ARM);
+                    newState(State.STATE_DEPOSIT_WOBBLE);
                 } else {
                     telemetry.addLine("SCHS: inside STATE_GO_TO_TARGET else");
                     Log.d("SCHS:", " inside STATE_GO_TO_TARGET else");
                 }
                 break;
 
-            case STATE_LOWER_WOBBLE_ARM:
+            case STATE_DEPOSIT_WOBBLE:
                 if (pathComplete(DRIVE, false)) {
                     telemetry.addLine("SCHS: inside STATE_LOWER_WOBBLE_ARM");
                     Log.d("SCHS:", " inside STATE_LOWER_WOBBLE_ARM");
                     //lower wobble arm
-                    newState(State.STATE_RELEASE_WOBBLE);
+
+                    rileyWobble.depositWobble();
+                    newState(State.STATE_GO_TO_LAUNCH);
                 } else {
                     telemetry.addLine("SCHS: inside STATE_LOWER_WOBBLE_ARM else");
                     Log.d("SCHS:", " inside STATE_LOWER_WOBBLE_ARM else");
-                }
-                break;
-
-            case STATE_RELEASE_WOBBLE:
-                if (pathComplete(WOBBLE, false)) {
-                    telemetry.addLine("SCHS: inside STATE_RELEASE_WOBBLE");
-                    Log.d("SCHS:", " inside STATE_RELEASE_WOBBLE");
-                    //release wobble goal servo
-                    newState(State.STATE_GO_TO_LAUNCH);
-                } else {
-
-                    telemetry.addLine("SCHS: inside STATE_RELEASE_WOBBLE else");
-                    Log.d("SCHS:", " inside STATE_RELEASE_WOBBLE else");
                 }
                 break;
 
@@ -166,12 +177,20 @@ public class SCHSController extends OpMode {
                 telemetry.addLine("SCHS: inside STATE_GO_TO_LAUNCH");
                 Log.d("SCHS:", " inside STATE_GO_TO_LAUNCH");
 
-                if (numRings == 1) {
-                    startPath(goToLaunchB);
-                } else if (numRings == 4) {
-                    startPath(goToLaunchC);
+                if (!rileyWobble.isMoving()) {
+                    if (numRings == 1) {
+                        startPath(goToLaunchB);
+                    } else if (numRings == 4) {
+                        startPath(goToLaunchC);
+                    } else {
+                        startPath(goToLaunchA);
+                    }
+                    newState(State.STATE_STOP);
+                } else {
+                    telemetry.addLine("SCHS: inside STATE_GO_TO_LAUNCH else");
+                    Log.d("SCHS:", " inside STATE_GO_TO_LAUNCH else");
                 }
-                newState(State.STATE_STOP);
+                break;
 
             case STATE_TEST_1:
                 if (rileyChassis.encodersAtZero()) {
@@ -184,22 +203,13 @@ public class SCHSController extends OpMode {
                 break;
 
             case STATE_STOP:
-                if (!rileyShooter.getIsShooting()) {
-                    Log.d("SCHS", "inside STATES_STOP");
-                    telemetry.addLine("STATES_STOP");
-                } else {
-                    telemetry.addLine("SCHS: STATE_STOP else");
-                    Log.d("SCHS:", "STATE_STOP else");
-                }
-
-                /*
                 if (pathComplete(DRIVE, false)) {
                     Log.d("SCHS", "inside STATES_STOP");
                     telemetry.addLine("STATES_STOP");
                 } else {
                     telemetry.addLine("SCHS: STATE_STOP else");
                     Log.d("SCHS:", "STATE_STOP else");
-                }*/
+                }
                 break;
                 
         }

@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import android.util.Log;
+
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -39,10 +41,25 @@ class SCHSWobbleGoal {
 
     }
 
-    public void dropWobble() {
-
+    public void depositWobble() {
+        motorWobble.setTargetPosition(WOBBLE_ARM_DIST);
+        motorWobble.setPower(0.8);
+        while ((Math.abs(motorWobble.getCurrentPosition() - motorWobble.getTargetPosition()) > 10)) {
+            Log.d("SCHSWobble: ", "Waiting for wobble arm to move");
+        }
+        sleep(1500);
+        openGrabber();
     }
 
+    public boolean isMoving() {
+        if (motorWobble.getVelocity() == 0) {
+            return false;
+        }
+        return true;
+    }
 
+    public void openGrabber() {
+        wobbleServo.setPosition(0.4);
+    }
 
 }
