@@ -3,25 +3,30 @@ package org.firstinspires.ftc.teamcode;
 
 import android.util.Log;
 
-
-
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import static org.firstinspires.ftc.teamcode.SCHSConstants.*;
-import static org.firstinspires.ftc.teamcode.SCHSConstants.goToLaunchANew;
+import static org.firstinspires.ftc.teamcode.SCHSConstants.COUNTS_PER_INCH;
+import static org.firstinspires.ftc.teamcode.SCHSConstants.DRIVE;
+import static org.firstinspires.ftc.teamcode.SCHSConstants.SHOOT_VEL;
+import static org.firstinspires.ftc.teamcode.SCHSConstants.goToLaunchA;
+import static org.firstinspires.ftc.teamcode.SCHSConstants.goToLaunchB;
+import static org.firstinspires.ftc.teamcode.SCHSConstants.goToLaunchC;
+import static org.firstinspires.ftc.teamcode.SCHSConstants.goToTargetA;
+import static org.firstinspires.ftc.teamcode.SCHSConstants.goToTargetB;
+import static org.firstinspires.ftc.teamcode.SCHSConstants.goToTargetC;
+import static org.firstinspires.ftc.teamcode.SCHSConstants.moveToShoot;
+import static org.firstinspires.ftc.teamcode.SCHSConstants.testPathRun;
 
-@Autonomous(name="SCHSController", group="SCHS")
+@Autonomous(name="SCHSControllerNew", group="SCHS")
 //@Disabled
-public class SCHSController extends OpMode {
+public class SCHSControllerNew extends OpMode {
 
     private SCHSDrive rileyChassis = null;
     private SCHSDetection rileyEnv = null;
-    private SCHSShooter rileyShooter = null;
+    private SCHSShooterNew rileyShooter = null;
     private SCHSWobbleGoal rileyWobble = null;
     private boolean isInitialized = false;
     private double leftDist;
@@ -58,7 +63,7 @@ public class SCHSController extends OpMode {
         rileyChassis = new SCHSDrive();
         rileyChassis.initialize(hardwareMap);
 
-        rileyShooter = new SCHSShooter();
+        rileyShooter = new SCHSShooterNew();
         rileyShooter.initialize(hardwareMap);
 
         rileyWobble = new SCHSWobbleGoal();
@@ -124,7 +129,7 @@ public class SCHSController extends OpMode {
                 telemetry.addLine("SCHS: inside STATE_MOVE_TO_SHOOT");
                 Log.d("SCHS:", "inside STATE_MOVE_TO_SHOOT");
                 if (rileyChassis.encodersAtZero()){
-                    startPath(moveToShootNew);
+                    startPath(moveToShoot);
                     newState(State.STATE_SHOOT_RINGS);
                 } else {
                     telemetry.addLine("SCHS: inside STATE_MOVE_TO_SHOOT");
@@ -151,11 +156,11 @@ public class SCHSController extends OpMode {
                     Log.d("SCHS:", " inside STATE_GO_TO_TARGET");
 
                     if (numRings == 1) {
-                        startPath(goToTargetBNew);
+                        startPath(goToTargetB);
                     } else if (numRings == 4) {
-                        startPath(goToTargetCNew);
+                        startPath(goToTargetC);
                     } else {
-                        startPath(goToTargetANew);
+                        startPath(goToTargetA);
                     }
                     newState(State.STATE_DEPOSIT_WOBBLE);
                 } else {
@@ -196,11 +201,11 @@ public class SCHSController extends OpMode {
                 Log.d("SCHS:", " inside STATE_GO_TO_LAUNCH");
 
                     if (numRings == 1) {
-                        startPath(goToLaunchBNew);
+                        startPath(goToLaunchB);
                     } else if (numRings == 4) {
-                        startPath(goToLaunchCNew);
+                        startPath(goToLaunchC);
                     } else {
-                        startPath(goToLaunchANew);
+                        startPath(goToLaunchA);
                     }
                     newState(State.STATE_STOP);
 

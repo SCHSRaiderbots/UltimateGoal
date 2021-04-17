@@ -7,6 +7,7 @@ class SCHSConstants {
     static final double POWER_HALF = 0.5;
     static final double POWER_TURN_SPEED = 0.5;
     static final double SHOOT_VEL = 1000; //2000 = too much, fix/modify this value after testing, velocity for shooting from back wall starting position
+    static final double SHOOT_VEL_NEW = 1000;
     static final int WOBBLE_ARM_DIST = 310;
 
     //Robot Constants
@@ -89,6 +90,46 @@ class SCHSConstants {
 
     //go to launch line from target zone C
     static final SCHSPathSeg[] goToLaunchC = {
+            new SCHSPathSeg(-6, -6, 0.9),  // Back 6in
+            new SCHSPathSeg(TURN_VALUE_90, -TURN_VALUE_90, 0.9),  // left 90
+            new SCHSPathSeg(-48, -48, 0.9),  // Back 4 ft
+    };
+
+    //New paths for shooting from new location, with pidf control, -18 from original straight path
+    static final SCHSPathSeg[] moveToShootNew = {
+            new SCHSPathSeg(30, 30, 0.9) //forward 30 in (-18in from original path)
+    };
+
+    //go to target zone A to deposit wobble goal (0 rings)
+    static final SCHSPathSeg[] goToTargetANew = {
+            new SCHSPathSeg(35, 35, 0.9),  // Forward 13.5  (+18in from original path)
+            new SCHSPathSeg(-TURN_VALUE_90, TURN_VALUE_90, 0.9),  // Right 90
+            //new SCHSPathSeg(6, 6, 0.9),  // Forward 6 in
+    };
+
+    static final SCHSPathSeg[] goToLaunchANew = {
+            new SCHSPathSeg(-6, -6, 0.9),  // backward 6 in
+    };
+
+    //go to target zone B to deposit wobble goal (1 rings)
+    static final SCHSPathSeg[] goToTargetBNew = {
+            new SCHSPathSeg(34, 34, 0.9),  // Forward 22.5 in (+18in from original path)
+    };
+
+    //go to launch line from target zone B
+    static final SCHSPathSeg[] goToLaunchBNew = {
+            new SCHSPathSeg(-2, -2, 0.9),  // Back 6 in
+    };
+
+    //go to target zone C to deposit wobble goal (4 rings)
+    static final SCHSPathSeg[] goToTargetCNew = {
+            new SCHSPathSeg(83, 83, 0.9),  // Forward 62.5 in (+18in from original path)
+            new SCHSPathSeg(-TURN_VALUE_90, TURN_VALUE_90, 0.9),  // Right 90
+            //new SCHSPathSeg(6, 6, 0.9),  // Forward 6 in
+    };
+
+    //go to launch line from target zone C
+    static final SCHSPathSeg[] goToLaunchCNew = {
             new SCHSPathSeg(-6, -6, 0.9),  // Back 6in
             new SCHSPathSeg(TURN_VALUE_90, -TURN_VALUE_90, 0.9),  // left 90
             new SCHSPathSeg(-48, -48, 0.9),  // Back 4 ft
