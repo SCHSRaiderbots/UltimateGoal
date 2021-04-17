@@ -173,7 +173,7 @@ public class SCHSDrive {
         gyroParameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
         gyroParameters.loggingEnabled = false;
 
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        //imu = hardwareMap.get(BNO055IMU.class, "imu");
         //imu.initialize(gyroParameters);
     }
 
@@ -181,6 +181,14 @@ public class SCHSDrive {
     public void initialize(HardwareMap hardwareMap) {
         init(hardwareMap, null);
 
+    }
+
+    public double getLeftPower() {
+        return motorLeft.getPower();
+    }
+
+    public double getRightPower() {
+        return motorRight.getPower();
     }
 
     /**
@@ -203,9 +211,9 @@ public class SCHSDrive {
         distpertickRight = mWheelDiameterRight * Math.PI / (ticksPerWheelRev);
     }
 
-    /**
+   /* *//**
      * An OpMode should call this during its init_loop() method
-     */
+     *//*
     public void init_loop() {
         // check robot health
         if (telemetry != null && voltageBattery < 11.5) {
@@ -221,7 +229,7 @@ public class SCHSDrive {
                 Log.d("Status", "SCHSMotor:moveStraightWithGyro: gyro done calibrating");
             }
         }
-    }
+    }*/
 
     /**
      * An OpMode should call this during its start() method
@@ -280,6 +288,9 @@ public class SCHSDrive {
     void useConstantSpeed() {
         motorLeft.setMode(RunMode.RUN_USING_ENCODER);
         motorRight.setMode(RunMode.RUN_USING_ENCODER);
+
+        //motorLeft.setMode(RunMode.RUN_WITHOUT_ENCODER);
+        //motorRight.setMode(RunMode.RUN_WITHOUT_ENCODER);
     }
 
     /**

@@ -1,15 +1,15 @@
 package org.firstinspires.ftc.teamcode;
 
-<<<<<<< HEAD
+
 import android.util.Log;
 
-=======
->>>>>>> master
+
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-<<<<<<< HEAD
+
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import static org.firstinspires.ftc.teamcode.SCHSConstants.*;
@@ -34,7 +34,7 @@ public class SCHSController extends OpMode {
         STATE_SHOOT_RINGS,
         STATE_MOVE_TO_SHOOT,
         STATE_GO_TO_TARGET,
-        STATE_LOWER_WOBBLE_ARM,
+        STATE_LIFT_WOBBLE,
         STATE_GO_TO_LAUNCH,
 
         STATE_TEST_1,
@@ -63,8 +63,8 @@ public class SCHSController extends OpMode {
         rileyWobble = new SCHSWobbleGoal();
         rileyWobble.initialize(hardwareMap);
 
-        //rileyEnv = new SCHSDetection();
-        //rileyEnv.initialize(hardwareMap);
+        rileyEnv = new SCHSDetection();
+        rileyEnv.initialize(hardwareMap);
 
         //moved resetting encoders to init
         rileyChassis.resetEncoders();
@@ -75,46 +75,29 @@ public class SCHSController extends OpMode {
         msStuckDetectInit = 20000;
         msStuckDetectInitLoop = 20000;
 
-        /*
+
         //detect stack of rings here
         int initialRingNum = rileyEnv.detectNumRings();
         telemetry.addLine("SCHS: init num rings detected: " + initialRingNum);
-        Log.d("SCHS:", "init num rings detected: " + initialRingNum);*/
+        Log.d("SCHS:", "init num rings detected: " + initialRingNum);
 
-=======
-
-@Autonomous(name="SCHSController", group="SCHS")
-@Disabled
-public class SCHSController extends OpMode {
-
-    @Override
-    public void init() {
-        //initialize objects for chassis, shooter, etc
-        telemetry.addLine("Done Initializing");
->>>>>>> master
     }
 
     @Override
     public void start() {
         //Set up robot devices, initial state, and game timer
-<<<<<<< HEAD
         rileyChassis.setDrivePower(0,0);
         rileyChassis.setPoseInches(-36, -63, 90);
 
         runtime.reset();
         newState(State.STATE_INITIAL);
-        //newState(State.STATE_STONES_FIND_DIST);
-=======
-
-        //runtime.reset();
-        //newState(State.STATE_NAME);
->>>>>>> master
+        //newState(State.STATE_TEST_1);
     }
 
     @Override
     public void loop() {
-<<<<<<< HEAD
-        rileyChassis.loop();
+
+        //rileyChassis.loop();
         // Send the current state info (state and time) back to first line of driver station telemetry.
 
         switch (currState) {
@@ -123,14 +106,13 @@ public class SCHSController extends OpMode {
                 Log.d("SCHS:", "inside STATE_INITIAL");
                 if (rileyChassis.encodersAtZero()){
                     //scan rings
-                    /*numRings = rileyEnv.detectNumRings();
+                    numRings = rileyEnv.detectNumRings();
 
-                telemetry.addLine("numRings:" + numRings);
-                Log.d("SCHS: SCAN_RINGS", "numRings:" + numRings);*/
+                    telemetry.addLine("numRings:" + numRings);
+                    Log.d("SCHS: SCAN_RINGS", "numRings:" + numRings);
 
-                    numRings = 0;
                     newState(State.STATE_MOVE_TO_SHOOT);
-                    //newState((State.STATE_SCAN_RINGS));
+                    //newState((State.STATE_TEST_1));
                 } else {
                     telemetry.addLine("SCHS: STATE_INITIAL else");
                     Log.d("SCHS:", "STATE_INITIAL else");
@@ -188,10 +170,23 @@ public class SCHSController extends OpMode {
                     //lower wobble arm
 
                     rileyWobble.depositWobble();
-                    newState(State.STATE_GO_TO_LAUNCH);
+                    newState(State.STATE_LIFT_WOBBLE);
                 } else {
                     telemetry.addLine("SCHS: inside STATE_LOWER_WOBBLE_ARM else");
                     Log.d("SCHS:", " inside STATE_LOWER_WOBBLE_ARM else");
+                }
+                break;
+
+            case STATE_LIFT_WOBBLE:
+                telemetry.addLine("SCHS: inside STATE_LIFT_WOBBLE");
+                Log.d("SCHS:", " inside STATE_LIFT_WOBBLE");
+
+                if (!rileyWobble.isMoving()) {
+                    rileyWobble.liftWobble();
+                    newState(State.STATE_GO_TO_LAUNCH);
+                } else {
+                    telemetry.addLine("SCHS: inside STATE_LIFT_WOBBLE else");
+                    Log.d("SCHS:", " inside STATE_LIFT_WOBBLE else");
                 }
                 break;
 
@@ -199,7 +194,6 @@ public class SCHSController extends OpMode {
                 telemetry.addLine("SCHS: inside STATE_GO_TO_LAUNCH");
                 Log.d("SCHS:", " inside STATE_GO_TO_LAUNCH");
 
-                if (!rileyWobble.isMoving()) {
                     if (numRings == 1) {
                         startPath(goToLaunchB);
                     } else if (numRings == 4) {
@@ -208,10 +202,7 @@ public class SCHSController extends OpMode {
                         startPath(goToLaunchA);
                     }
                     newState(State.STATE_STOP);
-                } else {
-                    telemetry.addLine("SCHS: inside STATE_GO_TO_LAUNCH else");
-                    Log.d("SCHS:", " inside STATE_GO_TO_LAUNCH else");
-                }
+
                 break;
 
             case STATE_TEST_1:
@@ -272,8 +263,12 @@ public class SCHSController extends OpMode {
                 isArcTurn = false;
 
                 rileyChassis.addEncoderTarget(Left, Right);
-                rileyChassis.setDrivePower(currPath[currSeg].moveSpeed, currPath[currSeg].moveSpeed);
                 rileyChassis.setDriveMode(DcMotor.RunMode.RUN_TO_POSITION); // Enable RunToPosition mode
+                rileyChassis.setDrivePower(currPath[currSeg].moveSpeed, currPath[currSeg].moveSpeed);
+
+                Log.d("SCHS","left Power: " + rileyChassis.getLeftPower());
+                Log.d("SCHS","right Power: " + rileyChassis.getRightPower());
+
                 telemetry.addLine("SCHS: startseg(): move straight/turn");
                 Log.d("SCHS", "startseg(), target encoder left" + Left);
                 Log.d("SCHS", "startseg(), target encoder right" + Right);
@@ -382,10 +377,6 @@ public class SCHSController extends OpMode {
 
         Log.d("SCHS:", "moveComplete() no case entered");
         return false;
-=======
-        //state machine goes here
-        // Send the current state info (state and time) back to first line of driver station telemetry.
->>>>>>> master
     }
 
 }

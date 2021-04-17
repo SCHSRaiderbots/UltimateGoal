@@ -29,7 +29,7 @@ public class Shooter extends OpMode {
 
         // find the shooter motor
         // tryGet() method is used so failure to find the motor will not throw an exception
-        dcmotorShooter = hardwareMap.tryGet(DcMotorEx.class, "motorShooter");
+        dcmotorShooter = hardwareMap.tryGet(DcMotorEx.class, "shooterMotor2");
 
         // if there is a shooter motor, then initialize it
         if (dcmotorShooter != null) {
@@ -60,7 +60,7 @@ public class Shooter extends OpMode {
         }
 
         // initialize the servo that fires the ring
-        servoShoot = hardwareMap.tryGet(Servo.class, "servoShoot");
+        servoShoot = hardwareMap.tryGet(Servo.class, "shooterServo");
 
         // if the shooter servo exists, command it to the rest position
         if (servoShoot != null) {

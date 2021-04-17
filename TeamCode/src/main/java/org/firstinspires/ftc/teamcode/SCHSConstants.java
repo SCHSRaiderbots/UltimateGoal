@@ -48,22 +48,22 @@ class SCHSConstants {
 
     //test path
     static final SCHSPathSeg[] testPathRun = {
-            new SCHSPathSeg(12, 12, 0.75),  // Forward 1 ft
-            new SCHSPathSeg(-TURN_VALUE_90, TURN_VALUE_90, 0.75),  // Left 90
-            new SCHSPathSeg(24, 24, 0.75),  // Forward 2 ft
-            new SCHSPathSeg(TURN_VALUE_90, -TURN_VALUE_90, 0.75),  // right 90
-            new SCHSPathSeg(24, 24, 0.75),  // Forward 2 ft
+            new SCHSPathSeg(12, 12, 1.0),  // Forward 1 ft
+            new SCHSPathSeg(-TURN_VALUE_90, TURN_VALUE_90, 1.0),  // Left 90
+            new SCHSPathSeg(24, 24, 1.0),  // Forward 2 ft
+            new SCHSPathSeg(TURN_VALUE_90, -TURN_VALUE_90, 1.0),  // right 90
+            new SCHSPathSeg(24, 24, 1.0),  // Forward 2 ft
     };
 
     static final SCHSPathSeg[] moveToShoot = {
-            new SCHSPathSeg(52.5, 52.5, 0.9)
+            new SCHSPathSeg(48, 48, 0.9)
     };
 
     //go to target zone A to deposit wobble goal (0 rings)
     static final SCHSPathSeg[] goToTargetA = {
-            new SCHSPathSeg(13.5, 13.5, 0.9),  // Forward 13.5 in
+            new SCHSPathSeg(17, 17, 0.9),  // Forward 13.5 in
             new SCHSPathSeg(-TURN_VALUE_90, TURN_VALUE_90, 0.9),  // Right 90
-            new SCHSPathSeg(6, 6, 0.9),  // Forward 6 in
+            //new SCHSPathSeg(6, 6, 0.9),  // Forward 6 in
     };
 
     static final SCHSPathSeg[] goToLaunchA = {
@@ -72,26 +72,38 @@ class SCHSConstants {
 
     //go to target zone B to deposit wobble goal (1 rings)
     static final SCHSPathSeg[] goToTargetB = {
-            new SCHSPathSeg(22.5, 22.5, 0.9),  // Forward 22.5 in
+            new SCHSPathSeg(16, 16, 0.9),  // Forward 22.5 in
     };
 
     //go to launch line from target zone B
     static final SCHSPathSeg[] goToLaunchB = {
-            new SCHSPathSeg(-6, -6, 0.9),  // Back 6 in
+            new SCHSPathSeg(-2, -2, 0.9),  // Back 6 in
     };
 
     //go to target zone C to deposit wobble goal (4 rings)
     static final SCHSPathSeg[] goToTargetC = {
-            new SCHSPathSeg(62.5, 62.5, 0.9),  // Forward 62.5 in
+            new SCHSPathSeg(65, 65, 0.9),  // Forward 62.5 in
             new SCHSPathSeg(-TURN_VALUE_90, TURN_VALUE_90, 0.9),  // Right 90
-            new SCHSPathSeg(6, 6, 0.9),  // Forward 6 in
+            //new SCHSPathSeg(6, 6, 0.9),  // Forward 6 in
     };
 
     //go to launch line from target zone C
     static final SCHSPathSeg[] goToLaunchC = {
             new SCHSPathSeg(-6, -6, 0.9),  // Back 6in
-            new SCHSPathSeg(-TURN_VALUE_90, TURN_VALUE_90, 0.9),  // Left 90
+            new SCHSPathSeg(TURN_VALUE_90, -TURN_VALUE_90, 0.9),  // left 90
             new SCHSPathSeg(-48, -48, 0.9),  // Back 4 ft
+    };
+
+    static final SCHSPathSeg[] testA = {
+            new SCHSPathSeg(12, 12, 0.9)
+    };
+
+    static final SCHSPathSeg[] testB = {
+            new SCHSPathSeg(24, 24, 0.9)
+    };
+
+    static final SCHSPathSeg[] testC = {
+            new SCHSPathSeg(36, 36, 0.9)
     };
 
     //Tensor Flow Object detection

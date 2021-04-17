@@ -42,6 +42,7 @@ public class SCHSDetection {
          **/
         if (tfod != null) {
             tfod.activate();
+            tfod.setZoom(1.5, 1.78);
         }
     }
 
