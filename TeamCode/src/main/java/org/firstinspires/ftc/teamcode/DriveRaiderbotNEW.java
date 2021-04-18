@@ -54,10 +54,9 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="DriveRaiderbot", group="SCHS")
+@TeleOp(name="DriveRaiderbotNEW", group="SCHS")
 //@Disabled
 public class DriveRaiderbotNEW extends OpMode {
-
 
     //This OpMode will be used to begin testing all components together (with driver control) as they are built
     //Currently includes ability to drive robot chassis and shooter with 2 motors
